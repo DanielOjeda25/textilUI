@@ -1,10 +1,14 @@
 import { Application, extend } from '@pixi/react'
-import { Container, Graphics, Sprite } from 'pixi.js'
+import { Container, Graphics, Sprite, Text } from 'pixi.js'
 import type { Graphics as PixiGraphics } from 'pixi.js'
 import { useEffect } from 'react'
 import { useViewport } from './viewport/useViewport'
 import { useCanvasInteraction } from '../hooks/useCanvasInteraction'
-extend({ Container, Graphics, Sprite })
+import { useCanvasStore } from '../state/useCanvasStore'
+import RasterLayer from './layers/RasterLayer'
+import VectorLayer from './layers/VectorLayer.tsx'
+import TextLayer from './layers/TextLayer'
+extend({ Container, Graphics, Sprite, Text })
 
 
 export default function PixiCanvas() {
@@ -21,6 +25,7 @@ export default function PixiCanvas() {
 type SceneProps = { width: number; height: number }
 function SceneWithSize({ width, height }: SceneProps) {
   const { viewport, controller } = useViewport()
+  const layers = useCanvasStore((s) => s.layers)
   useEffect(() => {
     controller.setScreenSize(width, height)
     controller.setContentSize(1000, 1000)
@@ -45,14 +50,12 @@ function SceneWithSize({ width, height }: SceneProps) {
         />
       )}
       <pixiContainer scale={viewport.scale} x={viewport.x} y={viewport.y}>
-        <pixiGraphics
-          draw={(g: PixiGraphics) => {
-            g.clear()
-            g.setFillStyle({ color: 0x3366ff })
-            g.rect(0, 0, 1000, 1000)
-            g.fill()
-          }}
-        />
+        {layers.map((layer) => {
+          if (layer.type === 'raster') return <RasterLayer key={layer.id} layer={layer} />
+          if (layer.type === 'vector') return <VectorLayer key={layer.id} layer={layer} />
+          if (layer.type === 'text') return <TextLayer key={layer.id} layer={layer} />
+          return null
+        })}
       </pixiContainer>
     </>
   )
