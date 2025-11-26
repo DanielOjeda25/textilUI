@@ -8,6 +8,7 @@ import { useCanvasStore } from '../state/useCanvasStore'
 import RasterLayer from './layers/RasterLayer'
 import VectorLayer from './layers/VectorLayer.tsx'
 import TextLayer from './layers/TextLayer'
+import BoundingBoxLayer from './tools/BoundingBoxLayer'
 extend({ Container, Graphics, Sprite, Text })
 
 
@@ -31,6 +32,7 @@ function SceneWithSize({ width, height }: SceneProps) {
     controller.setContentSize(1000, 1000)
   }, [controller, width, height])
   useCanvasInteraction(controller)
+  const { handlers } = useCanvasInteraction(controller)
   const checkerSize = 16
   return (
     <>
@@ -49,13 +51,14 @@ function SceneWithSize({ width, height }: SceneProps) {
           }}
         />
       )}
-      <pixiContainer scale={viewport.scale} x={viewport.x} y={viewport.y}>
+      <pixiContainer scale={viewport.scale} x={viewport.x} y={viewport.y} eventMode="static" onPointerDown={handlers.onPointerDown} onPointerMove={handlers.onPointerMove} onPointerUp={handlers.onPointerUp}>
         {layers.map((layer) => {
           if (layer.type === 'raster') return <RasterLayer key={layer.id} layer={layer} />
           if (layer.type === 'vector') return <VectorLayer key={layer.id} layer={layer} />
           if (layer.type === 'text') return <TextLayer key={layer.id} layer={layer} />
           return null
         })}
+        <BoundingBoxLayer />
       </pixiContainer>
     </>
   )
