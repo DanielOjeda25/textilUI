@@ -1,3 +1,9 @@
+import PixiCanvas from '../canvas/PixiCanvas'
+
 export default function App() {
-  return <div>Textil UI</div>
+  return (
+    <div className="w-screen h-screen overflow-hidden">
+      <PixiCanvas />
+    </div>
+  )
 }
