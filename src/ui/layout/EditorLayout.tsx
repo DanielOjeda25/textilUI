@@ -3,15 +3,15 @@ import LayersPanel from '../panels/LayersPanel'
 import Toolbar from '../toolbar/Toolbar'
 import PixiCanvas from '../../canvas/PixiCanvas'
 import Modal from '../components/Modal'
-import FileImporter from '../components/FileImporter'
 import { createLayerFromFile } from '../../app/createLayerFromFile'
+import { useImportStore } from '../../state/useImportStore'
 import { LayerFactory } from '../../canvas/layers/LayerFactory'
 import { useCanvasStore } from '../../state/useCanvasStore'
 import { useHistoryStore } from '../../state/useHistoryStore'
 import { useShortcut } from '../../hooks/useShortcut'
 
 export default function EditorLayout() {
-  const [importOpen, setImportOpen] = useState(false)
+  const { open: openImport } = useImportStore()
   const [textOpen, setTextOpen] = useState(false)
   const [textValue, setTextValue] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -65,6 +65,7 @@ export default function EditorLayout() {
       <div className="h-12 bg-neutral-100 border-b border-neutral-300 flex items-center px-3 gap-2 z-20">
         <button className="md:hidden px-3 py-1 bg-neutral-300 rounded" onClick={() => setSidebarOpen(true)}>Menu</button>
         <span className="text-sm text-neutral-600 flex-1">Topbar</span>
+        <button className="hidden md:inline-flex px-3 py-1 bg-blue-600 text-white rounded" onClick={() => openImport()}>Importar</button>
         <TopbarUndoRedo />
       </div>
       <div className="flex flex-1 overflow-hidden h-full min-h-0">
@@ -92,13 +93,11 @@ export default function EditorLayout() {
 
         <div className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-neutral-900 text-neutral-200 border-t border-neutral-700 z-20 flex items-center justify-between px-3">
           <button className="px-3 py-2 bg-neutral-800 rounded" onClick={() => setSidebarOpen(true)}>Capas</button>
-          <button className="px-3 py-2 bg-blue-600 text-white rounded" onClick={() => setImportOpen(true)}>Importar</button>
+          <button className="px-3 py-2 bg-blue-600 text-white rounded" onClick={() => openImport()}>Importar</button>
         </div>
       </div>
 
-      <Modal open={importOpen} onClose={() => setImportOpen(false)}>
-        <FileImporter onFiles={async (files) => { await createLayerFromFile(files); setImportOpen(false) }} />
-      </Modal>
+
 
       <Modal open={textOpen} onClose={() => setTextOpen(false)}>
         <div className="flex flex-col gap-2">
@@ -131,7 +130,7 @@ function TopbarUndoRedo() {
   useShortcut(['Ctrl', 'Shift', 'Z'], redo)
   return (
     <div className="flex items-center gap-2">
-      <button className="px-3 py-1 bg-neutral-300 rounded" onClick={undo}>Undo</button>
+      <button className="px-3 py-1 bg-red-300 rounded" onClick={undo}>Undo</button>
       <button className="px-3 py-1 bg-neutral-300 rounded" onClick={redo}>Redo</button>
     </div>
   )
