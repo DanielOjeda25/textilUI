@@ -18,6 +18,7 @@ export interface RasterLayer extends BaseLayer {
     image: HTMLImageElement
     width: number
     height: number
+    alphaMap?: { w: number; h: number; data: Uint8Array }
 }
 
 export interface VectorLayer extends BaseLayer {

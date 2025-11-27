@@ -1,10 +1,10 @@
 import { useCanvasStore } from '../../state/useCanvasStore'
+import { useHistoryStore } from '../../state/useHistoryStore'
+import { UpdateLayerCommand, RemoveLayerCommand } from '../../history/commands'
 import type { AnyLayer } from '../../canvas/layers/layer.types'
 
 type Props = { layer: AnyLayer }
 export default function LayerItem({ layer }: Props) {
-  const toggleVisibility = useCanvasStore((s) => s.toggleVisibility)
-  const toggleLocked = useCanvasStore((s) => s.toggleLocked)
   const selectLayer = useCanvasStore((s) => s.selectLayer)
 
   const icon = layer.type === 'raster' ? '🖼️' : layer.type === 'vector' ? '🔷' : '🔤'
@@ -14,10 +14,10 @@ export default function LayerItem({ layer }: Props) {
     <div className={`flex items-center gap-2 px-2 py-1 cursor-pointer ${selected ? 'bg-blue-600 text-white' : 'bg-neutral-800 text-neutral-200'}`} onClick={() => selectLayer(layer.id)}>
       <span className="w-5 text-center">{icon}</span>
       <span className="flex-1 truncate">{layer.name}</span>
-      <button className="px-2" onClick={(e) => { e.stopPropagation(); toggleVisibility(layer.id) }}>{layer.visible ? '👁️' : '🚫'}</button>
-      <button className="px-2" onClick={(e) => { e.stopPropagation(); toggleLocked(layer.id) }}>{layer.locked ? '🔒' : '🔓'}</button>
+      <button className="px-2" onClick={(e) => { e.stopPropagation(); useHistoryStore.getState().execute(new UpdateLayerCommand(layer.id, { visible: !layer.visible })) }}>{layer.visible ? '👁️' : '🚫'}</button>
+      <button className="px-2" onClick={(e) => { e.stopPropagation(); useHistoryStore.getState().execute(new UpdateLayerCommand(layer.id, { locked: !layer.locked })) }}>{layer.locked ? '🔒' : '🔓'}</button>
+      <button className="px-2" onClick={(e) => { e.stopPropagation(); useHistoryStore.getState().execute(new RemoveLayerCommand(layer.id)) }}>🗑️</button>
       <span className="px-2">⋮⋮</span>
     </div>
   )
 }
-

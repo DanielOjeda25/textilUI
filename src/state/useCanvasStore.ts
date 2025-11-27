@@ -14,6 +14,7 @@ export interface CanvasStore {
   updateLayer: (id: string, partial: Partial<AnyLayer>) => void
   toggleVisibility: (id: string) => void
   toggleLocked: (id: string) => void
+  setAlphaMap: (id: string, map: { w: number; h: number; data: Uint8Array }) => void
 }
 
 const initialViewport: ViewportState = {
@@ -77,5 +78,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   })),
   toggleLocked: (id: string) => set(({ layers }) => ({
     layers: layers.map((l) => (l.id === id ? { ...l, locked: !l.locked } : l)),
+  })),
+  setAlphaMap: (id: string, map: { w: number; h: number; data: Uint8Array }) => set(({ layers }) => ({
+    layers: layers.map((l) => (l.id === id && l.type === 'raster' ? { ...l, alphaMap: map } : l)),
   })),
 }))

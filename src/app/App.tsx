@@ -1,9 +1,5 @@
-import PixiCanvas from '../canvas/PixiCanvas'
+import EditorLayout from '../ui/layout/EditorLayout'
 
 export default function App() {
-  return (
-    <div className="w-screen h-screen overflow-hidden">
-      <PixiCanvas />
-    </div>
-  )
+  return <EditorLayout />
 }

@@ -12,14 +12,16 @@ import BoundingBoxLayer from './tools/BoundingBoxLayer'
 extend({ Container, Graphics, Sprite, Text })
 
 
-export default function PixiCanvas() {
-  const width = 1200
-  const height = 800
+export type PixiCanvasProps = { width: number; height: number }
+export default function PixiCanvas({ width, height }: PixiCanvasProps) {
+  console.log("PixiCanvas MONTANDO", width, height)
   const background = 0xffffff
   return (
-    <Application width={width} height={height} background={background}>
-      <SceneWithSize width={width} height={height} />
-    </Application>
+    <div style={{ width: `${width}px`, height: `${height}px` }} className="w-full h-full">
+      <Application width={width} height={height} background={background}>
+        <SceneWithSize width={width} height={height} />
+      </Application>
+    </div>
   )
 }
 
@@ -31,7 +33,6 @@ function SceneWithSize({ width, height }: SceneProps) {
     controller.setScreenSize(width, height)
     controller.setContentSize(1000, 1000)
   }, [controller, width, height])
-  useCanvasInteraction(controller)
   const { handlers } = useCanvasInteraction(controller)
   const checkerSize = 16
   return (
@@ -51,7 +52,7 @@ function SceneWithSize({ width, height }: SceneProps) {
           }}
         />
       )}
-      <pixiContainer scale={viewport.scale} x={viewport.x} y={viewport.y} eventMode="static" onPointerDown={handlers.onPointerDown} onPointerMove={handlers.onPointerMove} onPointerUp={handlers.onPointerUp}>
+      <pixiContainer scale={viewport.scale} x={viewport.x} y={viewport.y} eventMode="static" interactiveChildren={true} onPointerDown={handlers.onPointerDown} onPointerMove={handlers.onPointerMove} onPointerUp={handlers.onPointerUp}>
         {layers.map((layer) => {
           if (layer.type === 'raster') return <RasterLayer key={layer.id} layer={layer} />
           if (layer.type === 'vector') return <VectorLayer key={layer.id} layer={layer} />

@@ -6,6 +6,8 @@ import { SelectionTool } from './SelectionTool'
 import { MoveTool } from './MoveTool'
 import { TransformTool } from './TransformTool'
 import { ViewportController } from '../viewport/ViewportController'
+import { getBounds } from './handle.utils'
+import { snapPoint } from '../snapping/snapping'
 
 export class ToolController {
   private active: Tool
@@ -43,20 +45,8 @@ export class ToolController {
       const ry = -sin * lx + cos * ly
       const tx = rx / s
       const ty = ry / s
-      let w = 0
-      let h = 0
-      if (l.type === 'raster') {
-        w = l.width
-        h = l.height
-      } else if (l.type === 'vector') {
-        // Approximate using 100x100 if size unknown; can be refined later
-        w = 100
-        h = 100
-      } else if (l.type === 'text') {
-        w = 100
-        h = 40
-      }
-      if (tx >= 0 && ty >= 0 && tx <= w && ty <= h) {
+      const { width, height } = getBounds(l)
+      if (tx >= 0 && ty >= 0 && tx <= width && ty <= height) {
         return { hit: true, layer: l }
       }
     }
@@ -69,9 +59,18 @@ export class ToolController {
   }
   onPointerMove = (e: PointerEvent) => {
     this.active.onPointerMove?.(e)
+    const activeType = this.active.type
+    if (activeType === 'move') {
+      const id = useCanvasStore.getState().selectedLayerId
+      if (!id) return
+      const layer = useCanvasStore.getState().layers.find((l) => l.id === id)
+      if (!layer) return
+      const vp = useCanvasStore.getState().viewport
+      const snapped = snapPoint(layer.x, layer.y, vp, 8)
+      if (snapped.x !== layer.x || snapped.y !== layer.y) useCanvasStore.getState().updateLayer(id, { x: snapped.x, y: snapped.y })
+    }
   }
   onPointerUp = (e: PointerEvent) => {
     this.active.onPointerUp?.(e)
   }
 }
-
