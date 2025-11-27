@@ -14,7 +14,7 @@ extend({ Container, Graphics, Sprite, Text })
 
 export type PixiCanvasProps = { width: number; height: number }
 export default function PixiCanvas({ width, height }: PixiCanvasProps) {
-  console.log('[PixiCanvas] Render OK', width, height)
+  console.log('PixiCanvas MONTANDO', width, height)
   const background = 0xffffff
   return (
     <div style={{ width: `${width}px`, height: `${height}px` }} className="w-full h-full">
