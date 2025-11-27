@@ -14,6 +14,7 @@ export default function EditorLayout() {
   const [importOpen, setImportOpen] = useState(false)
   const [textOpen, setTextOpen] = useState(false)
   const [textValue, setTextValue] = useState('')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const workAreaRef = useRef<HTMLDivElement | null>(null)
   const sidebarRef = useRef<HTMLDivElement | null>(null)
   const toolbarRef = useRef<HTMLDivElement | null>(null)
@@ -62,15 +63,16 @@ export default function EditorLayout() {
   return (
     <div className="w-screen h-screen flex flex-col">
       <div className="h-12 bg-neutral-100 border-b border-neutral-300 flex items-center px-3 gap-2 z-20">
+        <button className="md:hidden px-3 py-1 bg-neutral-300 rounded" onClick={() => setSidebarOpen(true)}>Menu</button>
         <span className="text-sm text-neutral-600 flex-1">Topbar</span>
         <TopbarUndoRedo />
       </div>
       <div className="flex flex-1 overflow-hidden h-full min-h-0">
-        <aside ref={sidebarRef} className="w-64 flex-shrink-0 h-full bg-[#f7f7f7] border-r border-neutral-300 overflow-y-auto z-20">
+        <aside ref={sidebarRef} className="hidden md:block md:w-14 lg:w-64 flex-shrink-0 h-full bg-[#f7f7f7] border-r border-neutral-300 overflow-y-auto z-20">
           <LayersPanel />
         </aside>
         <main ref={workAreaRef} className="flex-1 flex overflow-hidden min-w-0 min-h-0 items-stretch">
-          <div ref={toolbarRef} className="w-16 flex-shrink-0 h-full flex flex-col bg-neutral-900 text-neutral-200 border-r border-neutral-700 z-20">
+          <div ref={toolbarRef} className="hidden md:flex md:w-12 lg:w-16 flex-shrink-0 h-full flex flex-col bg-neutral-900 text-neutral-200 border-r border-neutral-700 z-20">
             <Toolbar onSelectFile={(file) => { void createLayerFromFile([file]) }} onOpenText={() => setTextOpen(true)} />
           </div>
 
@@ -79,31 +81,45 @@ export default function EditorLayout() {
           </div>
         </main>
 
-        <Modal open={importOpen} onClose={() => setImportOpen(false)}>
-          <FileImporter onFiles={async (files) => { await createLayerFromFile(files); setImportOpen(false) }} />
-        </Modal>
-
-        <Modal open={textOpen} onClose={() => setTextOpen(false)}>
-          <div className="flex flex-col gap-2">
-            <input className="border border-neutral-300 rounded px-2 py-1" value={textValue} onChange={(e) => setTextValue(e.target.value)} placeholder="Escribir texto" />
-            <div className="flex justify-end gap-2">
-              <button className="px-3 py-1 bg-neutral-300 rounded" onClick={() => setTextOpen(false)}>Cancelar</button>
-              <button className="px-3 py-1 bg-blue-600 text-white rounded" onClick={() => {
-                const v = useCanvasStore.getState().viewport
-                const wx = (v.screenWidth / 2 - v.x) / v.scale
-                const wy = (v.screenHeight / 2 - v.y) / v.scale
-                const layer = LayerFactory.createText(textValue || 'Texto')
-                const s = 1
-                const next = { ...layer, x: wx - 50 * s, y: wy - 20 * s, scale: s, name: 'Texto' }
-                useCanvasStore.getState().addLayer(next)
-                useCanvasStore.getState().selectLayer(next.id)
-                setTextOpen(false)
-                setTextValue('')
-              }}>Crear</button>
+        {sidebarOpen && (
+          <div className="md:hidden fixed inset-0 z-50">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
+            <div className="absolute left-0 top-12 bottom-14 w-64 bg-[#f7f7f7] border-r border-neutral-300 overflow-y-auto">
+              <LayersPanel />
             </div>
           </div>
-        </Modal>
+        )}
+
+        <div className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-neutral-900 text-neutral-200 border-t border-neutral-700 z-20 flex items-center justify-between px-3">
+          <button className="px-3 py-2 bg-neutral-800 rounded" onClick={() => setSidebarOpen(true)}>Capas</button>
+          <button className="px-3 py-2 bg-blue-600 text-white rounded" onClick={() => setImportOpen(true)}>Importar</button>
+        </div>
       </div>
+
+      <Modal open={importOpen} onClose={() => setImportOpen(false)}>
+        <FileImporter onFiles={async (files) => { await createLayerFromFile(files); setImportOpen(false) }} />
+      </Modal>
+
+      <Modal open={textOpen} onClose={() => setTextOpen(false)}>
+        <div className="flex flex-col gap-2">
+          <input className="border border-neutral-300 rounded px-2 py-1" value={textValue} onChange={(e) => setTextValue(e.target.value)} placeholder="Escribir texto" />
+          <div className="flex justify-end gap-2">
+            <button className="px-3 py-1 bg-neutral-300 rounded" onClick={() => setTextOpen(false)}>Cancelar</button>
+            <button className="px-3 py-1 bg-blue-600 text-white rounded" onClick={() => {
+              const v = useCanvasStore.getState().viewport
+              const wx = (v.screenWidth / 2 - v.x) / v.scale
+              const wy = (v.screenHeight / 2 - v.y) / v.scale
+              const layer = LayerFactory.createText(textValue || 'Texto')
+              const s = 1
+              const next = { ...layer, x: wx - 50 * s, y: wy - 20 * s, scale: s, name: 'Texto' }
+              useCanvasStore.getState().addLayer(next)
+              useCanvasStore.getState().selectLayer(next.id)
+              setTextOpen(false)
+              setTextValue('')
+            }}>Crear</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
