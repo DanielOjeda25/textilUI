@@ -1,4 +1,4 @@
-export type ToolType = 'select' | 'move' | 'transform' | 'text'
+export type ToolType = 'select' | 'move' | 'transform' | 'crop' | 'eraser' | 'magic' | 'color' | 'text'
 
 export interface Tool {
   type: ToolType
@@ -8,4 +8,3 @@ export interface Tool {
   activate?(): void
   deactivate?(): void
 }
-
