@@ -53,7 +53,11 @@ export class SelectionTool implements Tool {
   }
   onPointerDown(e: PointerEvent, hit: boolean) {
     if (!hit) return
-    const p = this.viewport.screenToWorld(e.clientX, e.clientY)
+    const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
+    const rect = canvas?.getBoundingClientRect()
+    const sx = e.clientX - (rect?.left ?? 0)
+    const sy = e.clientY - (rect?.top ?? 0)
+    const p = this.viewport.screenToWorld(sx, sy)
     const layers = useCanvasStore.getState().layers
     for (let i = layers.length - 1; i >= 0; i--) {
       const l = layers[i]

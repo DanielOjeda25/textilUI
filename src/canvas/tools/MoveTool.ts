@@ -19,7 +19,11 @@ export class MoveTool implements Tool {
   onPointerDown(e: PointerEvent) {
     const selectedId = useCanvasStore.getState().selectedLayerId
     if (!selectedId) return
-    const p = this.viewport.screenToWorld(e.clientX, e.clientY)
+    const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
+    const rect = canvas?.getBoundingClientRect()
+    const sx = e.clientX - (rect?.left ?? 0)
+    const sy = e.clientY - (rect?.top ?? 0)
+    const p = this.viewport.screenToWorld(sx, sy)
     this.dragging = true
     this.snap = e.ctrlKey || e.metaKey
     this.lastWorld = p
@@ -28,7 +32,11 @@ export class MoveTool implements Tool {
   }
   onPointerMove(e: PointerEvent) {
     if (!this.dragging) return
-    const p = this.viewport.screenToWorld(e.clientX, e.clientY)
+    const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
+    const rect = canvas?.getBoundingClientRect()
+    const sx = e.clientX - (rect?.left ?? 0)
+    const sy = e.clientY - (rect?.top ?? 0)
+    const p = this.viewport.screenToWorld(sx, sy)
     const dx = p.x - this.lastWorld.x
     const dy = p.y - this.lastWorld.y
     this.lastWorld = p

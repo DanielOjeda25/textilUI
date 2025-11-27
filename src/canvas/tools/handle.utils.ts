@@ -2,6 +2,11 @@ import type { AnyLayer } from '../layers/layer.types'
 
 export type Point = { x: number; y: number }
 
+// Tamaños base en píxeles de pantalla para handles y detección
+export const HANDLE_SIZE_SCREEN = 8
+export const HANDLE_HIT_RADIUS_SCREEN = 10
+export const ROTATE_HANDLE_OFFSET_SCREEN = 30
+
 export function getBounds(layer: AnyLayer): { width: number; height: number } {
   if (layer.type === 'raster') return { width: layer.width, height: layer.height }
   if (layer.type === 'vector') {
@@ -59,7 +64,7 @@ function mid(a: Point, b: Point): Point {
 export function rotateHandleWorld(layer: AnyLayer, viewportScale: number): Point {
   const c = cornersWorld(layer)
   const topMid = mid(c[0], c[1])
-  const offset = 30 / viewportScale
+  const offset = ROTATE_HANDLE_OFFSET_SCREEN / viewportScale
   const dir = normalize({ x: topMid.x - layer.x, y: topMid.y - layer.y })
   return { x: topMid.x + dir.x * offset, y: topMid.y + dir.y * offset }
 }
@@ -93,4 +98,19 @@ export function anchorForHandle(kind: Exclude<HandleKind, null>, index: number |
   if (kind === 'corner' && index !== undefined) return cs[(index + 2) % 4]
   if (kind === 'side' && index !== undefined) return ss[(index + 2) % 4]
   return { x: layer.x + rotate({ x: getBounds(layer).width * layer.scale / 2, y: getBounds(layer).height * layer.scale / 2 }, layer.rotation).x - rotate({ x: getBounds(layer).width * layer.scale / 2, y: getBounds(layer).height * layer.scale / 2 }, layer.rotation).x, y: layer.y }
+}
+
+export function isWithinLayer(world: Point, layer: AnyLayer): boolean {
+  const s = layer.scale
+  const cos = Math.cos(layer.rotation)
+  const sin = Math.sin(layer.rotation)
+  const lx = world.x - layer.x
+  const ly = world.y - layer.y
+  const rx = cos * lx + sin * ly
+  const ry = -sin * lx + cos * ly
+  const tx = rx / s
+  const ty = ry / s
+  const { width, height } = getBounds(layer)
+  if (tx < 0 || ty < 0 || tx > width || ty > height) return false
+  return true
 }
