@@ -71,7 +71,7 @@ export default function EditorLayout() {
         </aside>
         <main ref={workAreaRef} className="flex-1 flex overflow-hidden min-w-0 min-h-0 items-stretch">
           <div ref={toolbarRef} className="w-16 flex-shrink-0 h-full flex flex-col bg-neutral-900 text-neutral-200 border-r border-neutral-700 z-20">
-            <Toolbar onOpenImport={() => setImportOpen(true)} onOpenText={() => setTextOpen(true)} />
+            <Toolbar onSelectFile={(file) => { void createLayerFromFile([file]) }} onOpenText={() => setTextOpen(true)} />
           </div>
 
           <div className="flex-1 overflow-hidden relative bg-neutral-800 z-0 min-w-0 min-h-0">
