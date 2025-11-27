@@ -14,7 +14,7 @@ extend({ Container, Graphics, Sprite, Text })
 
 export type PixiCanvasProps = { width: number; height: number }
 export default function PixiCanvas({ width, height }: PixiCanvasProps) {
-  console.log("PixiCanvas MONTANDO", width, height)
+  console.log('[PixiCanvas] Render OK', width, height)
   const background = 0xffffff
   return (
     <div style={{ width: `${width}px`, height: `${height}px` }} className="w-full h-full">
@@ -32,6 +32,7 @@ function SceneWithSize({ width, height }: SceneProps) {
   useEffect(() => {
     controller.setScreenSize(width, height)
     controller.setContentSize(1000, 1000)
+    console.log('[SceneWithSize] setScreenSize', width, height)
   }, [controller, width, height])
   const { handlers } = useCanvasInteraction(controller)
   const checkerSize = 16
