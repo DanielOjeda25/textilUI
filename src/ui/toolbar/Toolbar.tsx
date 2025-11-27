@@ -1,35 +1,80 @@
-import { useToolStore } from '../../state/useToolStore'
-import { Move, MousePointer, RotateCcw, Type, Upload } from 'lucide-react'
+// FILE: src/ui/toolbar/Toolbar.tsx
+import {
+  MousePointer,
+  Move,
+  RotateCcw,
+  Crop,
+  Eraser,
+  Wand2,
+  Pipette,
+  Type,
+} from 'lucide-react'
 import type { ReactNode } from 'react'
+import { useToolStore } from '../../state/useToolStore'
+import { useCanvasStore } from '../../state/useCanvasStore'
 
-import { useRef } from 'react'
-type Props = { onSelectFile: (file: File) => void; onOpenText?: () => void }
-export default function Toolbar({ onSelectFile, onOpenText }: Props) {
-  const active = useToolStore((s) => s.activeTool)
-  const setActiveTool = useToolStore((s) => s.setActiveTool)
-  const inputRef = useRef<HTMLInputElement | null>(null)
-  const btn = (label: string, icon: ReactNode, tool: 'select' | 'move' | 'transform' | 'text') => (
-    <button
-      className={`flex items-center gap-1 px-3 py-2 ${active === tool ? 'bg-blue-600 text-white' : 'bg-neutral-800 text-neutral-200'}`}
-      onClick={() => setActiveTool(tool)}
-    >
-      {icon}
-      <span>{label}</span>
+type ToolId =
+  | 'select'
+  | 'move'
+  | 'transform'
+  | 'crop'
+  | 'eraser'
+  | 'magic'
+  | 'color'
+  | 'text'
+
+type Props = { onSelectFile?: (file: File) => void; onOpenText?: () => void }
+
+function ToolbarButton({ label, icon, active, onClick }: { label: string; icon: ReactNode; active: boolean; onClick: () => void }) {
+  const activeClass = active ? 'bg-blue-600 text-white' : 'bg-neutral-800 text-neutral-200'
+  return (
+    <button type="button" role="button" aria-pressed={active} className={`flex items-center gap-1 px-3 py-2 rounded ${activeClass}`} onClick={onClick}>
+      {icon} {label}
     </button>
   )
+}
+
+export default function Toolbar({ onOpenText }: Props) {
+  const active = useToolStore((s) => s.activeTool as ToolId)
+  const setActiveToolStore = useToolStore(
+    (s) => s.setActiveTool as (t: ToolId) => void,
+  )
+
+  function setActive(tool: ToolId) {
+    try {
+      setActiveToolStore(tool)
+    } catch {
+      // fallback
+      useCanvasStore.getState().setActiveTool(tool)
+    }
+  }
+
+  function btnProps(tool: ToolId) {
+    return { active: active === tool, onClick: () => setActive(tool) }
+  }
+
   return (
-    <div className="flex flex-col items-center gap-2 p-2 bg-neutral-900">
-      <button className="flex items-center gap-1 px-3 py-2 bg-neutral-700 text-white" type="button" onClick={() => inputRef.current?.click()}>
-        <Upload size={16} />
-        <span>Importar imagen</span>
-      </button>
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onSelectFile(f); if (inputRef.current) inputRef.current.value = '' }} />
-      {btn('Select', <MousePointer size={16} />, 'select')}
-      {btn('Move', <Move size={16} />, 'move')}
-      {btn('Transform', <RotateCcw size={16} />, 'transform')}
-      <button className={`flex items-center gap-1 px-3 py-2 ${active === 'text' ? 'bg-blue-600 text-white' : 'bg-neutral-800 text-neutral-200'}`} onClick={() => onOpenText ? onOpenText() : setActiveTool('text')}>
-        <Type size={16} />
-        <span>Text</span>
+    <div className="flex items-center gap-2 p-2 bg-neutral-900 border-b border-neutral-700">
+      <ToolbarButton label="Select" icon={<MousePointer size={18} />} {...btnProps('select')} />
+      <ToolbarButton label="Move" icon={<Move size={18} />} {...btnProps('move')} />
+      <ToolbarButton label="Transform" icon={<RotateCcw size={18} />} {...btnProps('transform')} />
+      <ToolbarButton label="Crop" icon={<Crop size={18} />} {...btnProps('crop')} />
+      <ToolbarButton label="Eraser" icon={<Eraser size={18} />} {...btnProps('eraser')} />
+      <ToolbarButton label="Magic" icon={<Wand2 size={18} />} {...btnProps('magic')} />
+      <ToolbarButton label="Color" icon={<Pipette size={18} />} {...btnProps('color')} />
+
+      <button
+        type="button"
+        role="button"
+        aria-pressed={active === 'text'}
+        className={`flex items-center gap-1 px-3 py-2 rounded ${active === 'text'
+          ? 'bg-blue-600 text-white'
+          : 'bg-neutral-800 text-neutral-200'
+          }`}
+        onClick={() => (onOpenText ? onOpenText() : setActive('text'))}
+      >
+        <Type size={18} />
+        Text
       </button>
     </div>
   )
