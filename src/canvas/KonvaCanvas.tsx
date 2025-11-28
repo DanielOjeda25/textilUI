@@ -3,6 +3,7 @@ import type Konva from 'konva'
 import { memo, useEffect, useRef, useState, useCallback } from 'react'
 import { useCanvasStore } from '../state/useCanvasStore'
 import type { RasterLayer, TextLayer, VectorLayer } from './layers/layer.types'
+import { cornersWorld } from './tools/handle.utils'
 import { shallow } from 'zustand/shallow'
 
 export type KonvaCanvasProps = { width: number; height: number }
@@ -11,6 +12,7 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
     const viewport = useCanvasStore((s) => s.viewport, shallow)
     useCanvasStore((s) => s.selectedLayerId)
     const selectedIds = useCanvasStore((s) => s.selectedLayerIds, shallow)
+    const selectionMode = useCanvasStore((s) => s.selectionMode)
     const layerIds = useCanvasStore((s) => s.layers.map((l) => l.id), shallow)
     const selectedLayer = useCanvasStore((s) => s.layers.find((l) => l.id === s.selectedLayerId) || null)
     const layersAll = useCanvasStore((s) => s.layers, shallow)
@@ -24,6 +26,7 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
     const lastDrawRef = useRef<number>(0)
     const scheduledRef = useRef<boolean>(false)
     const selStartRef = useRef<{ x: number; y: number } | null>(null)
+    const selStartWorldRef = useRef<{ x: number; y: number } | null>(null)
     const [selRect, setSelRect] = useState<{ active: boolean; x: number; y: number; w: number; h: number }>({ active: false, x: 0, y: 0, w: 0, h: 0 })
 
     const scheduleDraw = useCallback((layer?: Konva.Layer | null) => {
@@ -50,12 +53,15 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.key === ' ') setSpaceDown(true)
-            if (e.key === 'Escape') {
-                useCanvasStore.setState((s) => ({
-                    ...s,
-                    layers: s.layers.map((l) => ({ ...l, selected: false })),
-                    selectedLayerId: null,
-                }))
+            if (e.key.toLowerCase() === 'escape') {
+                useCanvasStore.getState().clearSelection()
+            }
+            const isMac = navigator.platform.toLowerCase().includes('mac')
+            const ctrlOrCmd = isMac ? e.metaKey : e.ctrlKey
+            if (ctrlOrCmd && e.key.toLowerCase() === 'a') {
+                e.preventDefault()
+                const ids = useCanvasStore.getState().layers.filter((l) => l.visible && !l.locked).map((l) => l.id)
+                useCanvasStore.getState().setSelection(ids)
             }
         }
         const onKeyUp = (e: KeyboardEvent) => { if (e.key === ' ') setSpaceDown(false) }
@@ -136,22 +142,14 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
     const onResetScale = useCallback(() => {
         if (!menu.layerId) return
         const ids = useCanvasStore.getState().selectedLayerIds.length > 1 ? useCanvasStore.getState().selectedLayerIds : [menu.layerId]
-        for (const id of ids) {
-            const l = layersAll.find((x) => x.id === id)
-            if (!l) continue
-            const baseX = l.originalX ?? 0
-            const baseY = l.originalY ?? 0
-            const baseRot = l.originalRotation ?? 0
-            if (l.type === 'raster') {
-                const rw = (l as RasterLayer).originalWidth ?? (l as RasterLayer).width
-                const rh = (l as RasterLayer).originalHeight ?? (l as RasterLayer).height
-                useCanvasStore.getState().updateLayer(l.id, { x: baseX, y: baseY, rotation: baseRot, width: rw, height: rh, scale: 1 })
-            } else {
-                useCanvasStore.getState().updateLayer(l.id, { x: baseX, y: baseY, rotation: baseRot, scale: 1 })
-            }
+        if (ids.length > 1) {
+            useCanvasStore.getState().resetSelection()
+        } else {
+            useCanvasStore.getState().resetLayer(ids[0])
         }
+        scheduleDraw(transformerRef.current?.getLayer() ?? null)
         closeMenu()
-    }, [menu.layerId, layersAll, closeMenu])
+    }, [menu.layerId, closeMenu, scheduleDraw])
 
     const onResetZoom = useCallback(() => {
         const centerPos = { x: 0, y: 0 }
@@ -173,6 +171,7 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
                     const sx = (e.evt as MouseEvent).clientX - rect.left
                     const sy = (e.evt as MouseEvent).clientY - rect.top
                     selStartRef.current = { x: sx, y: sy }
+                    selStartWorldRef.current = { x: (sx - viewport.x) / viewport.scale, y: (sy - viewport.y) / viewport.scale }
                     setSelRect({ active: true, x: sx, y: sy, w: 0, h: 0 })
                 }}
                 onMouseMove={(e) => {
@@ -196,12 +195,46 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
                     const ry = selRect.y
                     const rw = selRect.w
                     const rh = selRect.h
+                    const worldA = selStartWorldRef.current || { x: (rx - viewport.x) / viewport.scale, y: (ry - viewport.y) / viewport.scale }
+                    const worldB = { x: ((rx + rw) - viewport.x) / viewport.scale, y: ((ry + rh) - viewport.y) / viewport.scale }
+                    const minX = Math.min(worldA.x, worldB.x)
+                    const maxX = Math.max(worldA.x, worldB.x)
+                    const minY = Math.min(worldA.y, worldB.y)
+                    const maxY = Math.max(worldA.y, worldB.y)
+
+                    function dot(a: { x: number; y: number }, b: { x: number; y: number }) { return a.x * b.x + a.y * b.y }
+                    function norm(v: { x: number; y: number }) { const d = Math.hypot(v.x, v.y); return d > 0 ? { x: v.x / d, y: v.y / d } : { x: 0, y: 0 } }
+                    function projectInterval(points: { x: number; y: number }[], axis: { x: number; y: number }): { min: number; max: number } {
+                        let min = dot(points[0], axis), max = min
+                        for (let i = 1; i < points.length; i++) { const p = dot(points[i], axis); if (p < min) min = p; if (p > max) max = p }
+                        return { min, max }
+                    }
+                    function intersectsOBBWithAABB(corners: { x: number; y: number }[]): boolean {
+                        const axes = [norm({ x: corners[1].x - corners[0].x, y: corners[1].y - corners[0].y }), norm({ x: corners[3].x - corners[0].x, y: corners[3].y - corners[0].y }), { x: 1, y: 0 }, { x: 0, y: 1 }]
+                        const rectCorners = [
+                            { x: minX, y: minY },
+                            { x: maxX, y: minY },
+                            { x: maxX, y: maxY },
+                            { x: minX, y: maxY },
+                        ]
+                        for (const axis of axes) {
+                            const pPoly = projectInterval(corners, axis)
+                            const pRect = projectInterval(rectCorners, axis)
+                            if (pPoly.max < pRect.min || pRect.max < pPoly.min) return false
+                        }
+                        return true
+                    }
                     const selected: string[] = []
-                    for (const [id, node] of allNodesRef.current.entries()) {
+                    for (const [id] of allNodesRef.current.entries()) {
                         const l = layersAll.find((x) => x.id === id)
                         if (!l || !l.visible || l.locked) continue
-                        const r = node.getClientRect({ skipShadow: true, skipStroke: true })
-                        const intersects = !(r.x > rx + rw || r.x + r.width < rx || r.y > ry + rh || r.y + r.height < ry)
+                        const corners = cornersWorld(l)
+                        let intersects = false
+                        if (selectionMode === 'intersect') {
+                            intersects = intersectsOBBWithAABB(corners)
+                        } else {
+                            intersects = corners.every((c) => c.x >= minX && c.x <= maxX && c.y >= minY && c.y <= maxY)
+                        }
                         if (intersects) selected.push(id)
                     }
                     if (selected.length) {
@@ -216,6 +249,7 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
                         useCanvasStore.getState().clearSelection()
                     }
                     selStartRef.current = null
+                    selStartWorldRef.current = null
                     setSelRect({ active: false, x: 0, y: 0, w: 0, h: 0 })
                 }}
             >

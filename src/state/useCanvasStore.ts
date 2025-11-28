@@ -8,6 +8,8 @@ export interface CanvasStore {
   layers: AnyLayer[]
   selectedLayerId: string | null
   selectedLayerIds: string[]
+  selectionMode: 'intersect' | 'contain'
+  setSelectionMode: (mode: 'intersect' | 'contain') => void
   addLayer: (layer: AnyLayer) => void
   removeLayer: (id: string) => void
   selectLayer: (id: string) => void
@@ -16,6 +18,9 @@ export interface CanvasStore {
   clearSelection: () => void
   moveLayer: (id: string, index: number) => void
   updateLayer: (id: string, partial: Partial<AnyLayer>) => void
+  resetLayer: (id: string) => void
+  resetSelection: () => void
+  isLayerAtOriginal: (id: string) => boolean
   toggleVisibility: (id: string) => void
   toggleLocked: (id: string) => void
   setAlphaMap: (id: string, map: { w: number; h: number; data: Uint8Array }) => void
@@ -44,6 +49,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   layers: [],
   selectedLayerId: null,
   selectedLayerIds: [],
+  selectionMode: 'intersect',
+  setSelectionMode: (mode: 'intersect' | 'contain') => set({ selectionMode: mode }),
   addLayer: (layer: AnyLayer) => set({
     layers: [
       ...get().layers,
@@ -53,11 +60,12 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         originalX: layer.originalX ?? layer.x,
         originalY: layer.originalY ?? layer.y,
         originalRotation: layer.originalRotation ?? layer.rotation,
+        originalScale: layer.originalScale ?? layer.scale,
         ...(layer.type === 'raster'
           ? {
-            originalWidth: (layer as RasterLayer).originalWidth ?? (layer as RasterLayer).width,
-            originalHeight: (layer as RasterLayer).originalHeight ?? (layer as RasterLayer).height,
-          }
+              originalWidth: (layer as RasterLayer).originalWidth ?? (layer as RasterLayer).width,
+              originalHeight: (layer as RasterLayer).originalHeight ?? (layer as RasterLayer).height,
+            }
           : {}),
       },
     ],
@@ -97,16 +105,69 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     return { layers: arr }
   }),
   updateLayer: (id: string, partial: Partial<AnyLayer>) => set(({ layers }) => {
+    const filterKeys = ['originalX','originalY','originalRotation','originalWidth','originalHeight','originalScale']
+    const safe: any = { ...partial }
+    for (const k of filterKeys) { if (k in safe) delete safe[k] }
     const next = layers.map((l) => {
       if (l.id !== id) return l
       if (l.locked) return l
-      if (l.type === 'raster') return { ...l, ...(partial as Partial<RasterLayer>) }
-      if (l.type === 'vector') return { ...l, ...(partial as Partial<VectorLayer>) }
-      if (l.type === 'text') return { ...l, ...(partial as Partial<TextLayer>) }
+      if (l.type === 'raster') return { ...l, ...(safe as Partial<RasterLayer>) }
+      if (l.type === 'vector') return { ...l, ...(safe as Partial<VectorLayer>) }
+      if (l.type === 'text') return { ...l, ...(safe as Partial<TextLayer>) }
       return l
     })
     return { layers: next }
   }),
+  resetLayer: (id: string) => set(({ layers }) => {
+    const next = layers.map((l) => {
+      if (l.id !== id) return l
+      if (l.locked) return l
+      const baseX = l.originalX ?? 0
+      const baseY = l.originalY ?? 0
+      const baseRot = l.originalRotation ?? 0
+      if (l.type === 'raster') {
+        const rw = (l as RasterLayer).originalWidth ?? (l as RasterLayer).width
+        const rh = (l as RasterLayer).originalHeight ?? (l as RasterLayer).height
+        return { ...l, x: baseX, y: baseY, rotation: baseRot, width: rw, height: rh, scale: 1 }
+      }
+      const os = l.originalScale ?? 1
+      return { ...l, x: baseX, y: baseY, rotation: baseRot, scale: os }
+    })
+    return { layers: next }
+  }),
+  resetSelection: () => set(({ layers, selectedLayerIds }) => {
+    const ids = selectedLayerIds
+    const idSet = new Set(ids)
+    const next = layers.map((l) => {
+      if (!idSet.has(l.id)) return l
+      if (l.locked) return l
+      const baseX = l.originalX ?? 0
+      const baseY = l.originalY ?? 0
+      const baseRot = l.originalRotation ?? 0
+      if (l.type === 'raster') {
+        const rw = (l as RasterLayer).originalWidth ?? (l as RasterLayer).width
+        const rh = (l as RasterLayer).originalHeight ?? (l as RasterLayer).height
+        return { ...l, x: baseX, y: baseY, rotation: baseRot, width: rw, height: rh, scale: 1 }
+      }
+      const os = l.originalScale ?? 1
+      return { ...l, x: baseX, y: baseY, rotation: baseRot, scale: os }
+    })
+    return { layers: next }
+  }),
+  isLayerAtOriginal: (id: string) => {
+    const l = get().layers.find((x) => x.id === id)
+    if (!l) return false
+    const baseX = l.originalX ?? 0
+    const baseY = l.originalY ?? 0
+    const baseRot = l.originalRotation ?? 0
+    if (l.type === 'raster') {
+      const rw = (l as RasterLayer).originalWidth ?? (l as RasterLayer).width
+      const rh = (l as RasterLayer).originalHeight ?? (l as RasterLayer).height
+      return l.x === baseX && l.y === baseY && l.rotation === baseRot && (l as RasterLayer).width === rw && (l as RasterLayer).height === rh && l.scale === 1
+    }
+    const os = l.originalScale ?? 1
+    return l.x === baseX && l.y === baseY && l.rotation === baseRot && l.scale === os
+  },
   toggleVisibility: (id: string) => set(({ layers }) => ({
     layers: layers.map((l) => (l.id === id ? { ...l, visible: !l.visible } : l)),
   })),

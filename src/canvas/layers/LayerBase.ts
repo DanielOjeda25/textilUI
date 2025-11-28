@@ -16,5 +16,6 @@ export function createBaseLayer(name: string, type: LayerType): BaseLayer {
     originalX: 0,
     originalY: 0,
     originalRotation: 0,
+    originalScale: 1,
   }
 }

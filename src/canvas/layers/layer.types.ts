@@ -14,6 +14,7 @@ export interface BaseLayer {
     originalX?: number
     originalY?: number
     originalRotation?: number
+    originalScale?: number
 }
 
 export interface RasterLayer extends BaseLayer {
