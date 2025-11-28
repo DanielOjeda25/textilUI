@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useCanvasStore } from '../../state/useCanvasStore'
 import type { AnyLayer } from '../../canvas/layers/layer.types'
-import { Eye, EyeOff, Lock, Unlock, GripVertical, Image as ImageIcon, Square, Type } from 'lucide-react'
+import { Eye, EyeOff, Lock, Unlock, GripVertical, Image as ImageIcon, Square, Type, ChevronUp, ChevronDown, Trash2 } from 'lucide-react'
 
 type Props = { layer: AnyLayer }
 export default function LayerItem({ layer }: Props) {
@@ -13,6 +13,12 @@ export default function LayerItem({ layer }: Props) {
   const [name, setName] = useState(layer.name)
 
   const selected = layer.selected
+  const layers = useCanvasStore.getState().layers
+  const index = layers.findIndex((l) => l.id === layer.id)
+  const canUp = index > 0
+  const canDown = index < layers.length - 1
+  const moveLayer = useCanvasStore((s) => s.moveLayer)
+  const removeLayer = useCanvasStore((s) => s.removeLayer)
 
   function commitRename() {
     const next = name.trim()
@@ -35,6 +41,10 @@ export default function LayerItem({ layer }: Props) {
     >
       <span className="w-4 h-4 flex items-center justify-center text-neutral-300">{iconForLayer()}</span>
       <span className="w-4 h-4 ml-1 text-neutral-300"><GripVertical size={16} /></span>
+      <div className="flex items-center gap-1">
+        <button className="px-1 h-6" onClick={(e) => { e.stopPropagation(); if (canUp) moveLayer(layer.id, index - 1) }} disabled={!canUp} title="Subir capa"><ChevronUp size={16} /></button>
+        <button className="px-1 h-6" onClick={(e) => { e.stopPropagation(); if (canDown) moveLayer(layer.id, index + 1) }} disabled={!canDown} title="Bajar capa"><ChevronDown size={16} /></button>
+      </div>
       <div className="flex-1 min-w-0">
         {editing ? (
           <input
@@ -68,6 +78,14 @@ export default function LayerItem({ layer }: Props) {
         title={layer.locked ? 'Desbloquear' : 'Bloquear'}
       >
         {layer.locked ? <Lock size={16} /> : <Unlock size={16} />}
+      </button>
+      <button
+        className="px-2 h-6 flex items-center justify-center"
+        onClick={(e) => { e.stopPropagation(); removeLayer(layer.id) }}
+        aria-label={'Borrar capa'}
+        title={'Borrar'}
+      >
+        <Trash2 size={16} />
       </button>
     </div>
   )

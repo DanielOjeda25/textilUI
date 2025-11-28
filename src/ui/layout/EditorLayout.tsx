@@ -179,7 +179,7 @@ function exportPNG() {
   ctx.imageSmoothingQuality = 'high'
   const queue: Promise<void>[] = []
   for (const l of layers) {
-    if (l.type !== 'raster') continue
+    if (l.type !== 'raster' || !l.visible) continue
     queue.push(new Promise((resolve) => {
       const img = l.image
       if (!img) { resolve(); return }

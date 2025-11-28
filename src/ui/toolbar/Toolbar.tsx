@@ -43,7 +43,16 @@ export default function Toolbar({ onOpenText }: Props) {
   function setActive(tool: ToolId) { setActiveToolStore(tool) }
 
   function btnProps(tool: ToolId) {
-    return { active: active === tool, onClick: () => setActive(tool) }
+    return {
+      active: active === tool,
+      onClick: () => {
+        if (tool === 'crop' || tool === 'eraser' || tool === 'magic' || tool === 'color') {
+          alert('Función en desarrollo')
+          return
+        }
+        setActive(tool)
+      },
+    }
   }
 
   return (
