@@ -11,6 +11,8 @@ export class LayerFactory {
       image,
       width: image.naturalWidth || image.width,
       height: image.naturalHeight || image.height,
+      originalWidth: image.naturalWidth || image.width,
+      originalHeight: image.naturalHeight || image.height,
     }
     if (opts?.fileBuffer) {
       try {

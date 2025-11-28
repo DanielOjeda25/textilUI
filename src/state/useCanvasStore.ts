@@ -40,7 +40,22 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   layers: [],
   selectedLayerId: null,
   addLayer: (layer: AnyLayer) => set({
-    layers: [...get().layers, { ...layer, selected: false }],
+    layers: [
+      ...get().layers,
+      {
+        ...layer,
+        selected: false,
+        originalX: layer.originalX ?? layer.x,
+        originalY: layer.originalY ?? layer.y,
+        originalRotation: layer.originalRotation ?? layer.rotation,
+        ...(layer.type === 'raster'
+          ? {
+              originalWidth: (layer as RasterLayer).originalWidth ?? (layer as RasterLayer).width,
+              originalHeight: (layer as RasterLayer).originalHeight ?? (layer as RasterLayer).height,
+            }
+          : {}),
+      },
+    ],
   }),
   removeLayer: (id: string) => set(({ layers, selectedLayerId }) => {
     const next = layers.filter((l) => l.id !== id)

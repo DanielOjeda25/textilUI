@@ -11,6 +11,9 @@ export interface BaseLayer {
     scale: number
     rotation: number
     selected: boolean
+    originalX?: number
+    originalY?: number
+    originalRotation?: number
 }
 
 export interface RasterLayer extends BaseLayer {
@@ -19,6 +22,8 @@ export interface RasterLayer extends BaseLayer {
     width: number
     height: number
     alphaMap?: { w: number; h: number; data: Uint8Array }
+    originalWidth?: number
+    originalHeight?: number
 }
 
 export interface VectorLayer extends BaseLayer {

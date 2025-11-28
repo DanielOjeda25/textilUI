@@ -13,6 +13,8 @@ export function createBaseLayer(name: string, type: LayerType): BaseLayer {
     scale: 1,
     rotation: 0,
     selected: false,
+    originalX: 0,
+    originalY: 0,
+    originalRotation: 0,
   }
 }
-
