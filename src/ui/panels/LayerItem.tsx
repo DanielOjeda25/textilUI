@@ -36,7 +36,7 @@ export default function LayerItem({ layer }: Props) {
   return (
     <div
       className={`flex items-center gap-2 px-2 py-1 cursor-pointer ${selected ? 'bg-blue-600 text-white' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'}`}
-      onClick={() => selectLayer(layer.id)}
+      onClick={(e) => { if (e.ctrlKey || e.metaKey) useCanvasStore.getState().toggleSelectLayer(layer.id); else selectLayer(layer.id) }}
       onDoubleClick={(e) => { e.stopPropagation(); setEditing(true) }}
     >
       <span className="w-4 h-4 flex items-center justify-center text-neutral-300">{iconForLayer()}</span>

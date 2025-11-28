@@ -9,18 +9,22 @@ export type KonvaCanvasProps = { width: number; height: number }
 
 export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
     const viewport = useCanvasStore((s) => s.viewport, shallow)
-    const selectedId = useCanvasStore((s) => s.selectedLayerId)
+    useCanvasStore((s) => s.selectedLayerId)
+    const selectedIds = useCanvasStore((s) => s.selectedLayerIds, shallow)
     const layerIds = useCanvasStore((s) => s.layers.map((l) => l.id), shallow)
     const selectedLayer = useCanvasStore((s) => s.layers.find((l) => l.id === s.selectedLayerId) || null)
     const layersAll = useCanvasStore((s) => s.layers, shallow)
     const stageRef = useRef<Konva.Stage | null>(null)
     const transformerRef = useRef<Konva.Transformer | null>(null)
     const selectedNodeRef = useRef<Konva.Node | null>(null)
+    const allNodesRef = useRef<Map<string, Konva.Node>>(new Map())
     const [spaceDown, setSpaceDown] = useState(false)
     const containerRef = useRef<HTMLDivElement | null>(null)
     const [menu, setMenu] = useState<{ open: boolean; x: number; y: number; layerId: string | null }>({ open: false, x: 0, y: 0, layerId: null })
     const lastDrawRef = useRef<number>(0)
     const scheduledRef = useRef<boolean>(false)
+    const selStartRef = useRef<{ x: number; y: number } | null>(null)
+    const [selRect, setSelRect] = useState<{ active: boolean; x: number; y: number; w: number; h: number }>({ active: false, x: 0, y: 0, w: 0, h: 0 })
 
     const scheduleDraw = useCallback((layer?: Konva.Layer | null) => {
         const l = layer ?? transformerRef.current?.getLayer() ?? stageRef.current?.getLayers()[0]
@@ -105,15 +109,17 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
 
     useEffect(() => {
         const tr = transformerRef.current
-        const node = selectedNodeRef.current
-        if (tr && node && selectedLayer && selectedLayer.visible && !selectedLayer.locked) {
-            tr.nodes([node])
-            scheduleDraw(tr.getLayer())
-        } else if (tr) {
-            tr.nodes([])
-            scheduleDraw(tr.getLayer())
+        if (!tr) return
+        const nodes: Konva.Node[] = []
+        for (const id of selectedIds) {
+            const l = layersAll.find((x) => x.id === id)
+            if (!l || !l.visible || l.locked) continue
+            const n = allNodesRef.current.get(id)
+            if (n) nodes.push(n)
         }
-    }, [selectedId, selectedLayer, scheduleDraw])
+        tr.nodes(nodes)
+        scheduleDraw(tr.getLayer())
+    }, [selectedIds, layersAll, scheduleDraw])
 
     const baseDpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
     const pixelRatio = Math.min(baseDpr, Math.max(1, viewport.scale))
@@ -129,17 +135,20 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
 
     const onResetScale = useCallback(() => {
         if (!menu.layerId) return
-        const l = layersAll.find((x) => x.id === menu.layerId)
-        if (!l) return
-        const baseX = l.originalX ?? 0
-        const baseY = l.originalY ?? 0
-        const baseRot = l.originalRotation ?? 0
-        if (l.type === 'raster') {
-            const rw = (l as RasterLayer).originalWidth ?? (l as RasterLayer).width
-            const rh = (l as RasterLayer).originalHeight ?? (l as RasterLayer).height
-            useCanvasStore.getState().updateLayer(l.id, { x: baseX, y: baseY, rotation: baseRot, width: rw, height: rh, scale: 1 })
-        } else {
-            useCanvasStore.getState().updateLayer(l.id, { x: baseX, y: baseY, rotation: baseRot, scale: 1 })
+        const ids = useCanvasStore.getState().selectedLayerIds.length > 1 ? useCanvasStore.getState().selectedLayerIds : [menu.layerId]
+        for (const id of ids) {
+            const l = layersAll.find((x) => x.id === id)
+            if (!l) continue
+            const baseX = l.originalX ?? 0
+            const baseY = l.originalY ?? 0
+            const baseRot = l.originalRotation ?? 0
+            if (l.type === 'raster') {
+                const rw = (l as RasterLayer).originalWidth ?? (l as RasterLayer).width
+                const rh = (l as RasterLayer).originalHeight ?? (l as RasterLayer).height
+                useCanvasStore.getState().updateLayer(l.id, { x: baseX, y: baseY, rotation: baseRot, width: rw, height: rh, scale: 1 })
+            } else {
+                useCanvasStore.getState().updateLayer(l.id, { x: baseX, y: baseY, rotation: baseRot, scale: 1 })
+            }
         }
         closeMenu()
     }, [menu.layerId, layersAll, closeMenu])
@@ -154,17 +163,74 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
 
     return (
         <div ref={containerRef} style={{ width, height }} className="relative h-full w-full">
-            <Stage ref={stageRef} width={width} height={height} draggable={spaceDown} x={viewport.x} y={viewport.y} scaleX={viewport.scale} scaleY={viewport.scale} pixelRatio={pixelRatio} onWheel={onWheel} onDragMove={onDragMoveStage}>
+            <Stage ref={stageRef} width={width} height={height} draggable={spaceDown} x={viewport.x} y={viewport.y} scaleX={viewport.scale} scaleY={viewport.scale} pixelRatio={pixelRatio} onWheel={onWheel} onDragMove={onDragMoveStage}
+                onMouseDown={(e) => {
+                    if (spaceDown) return
+                    const targetClass = (e.target as unknown as { className?: string }).className
+                    if (targetClass !== 'Stage') return
+                    const rect = containerRef.current?.getBoundingClientRect()
+                    if (!rect) return
+                    const sx = (e.evt as MouseEvent).clientX - rect.left
+                    const sy = (e.evt as MouseEvent).clientY - rect.top
+                    selStartRef.current = { x: sx, y: sy }
+                    setSelRect({ active: true, x: sx, y: sy, w: 0, h: 0 })
+                }}
+                onMouseMove={(e) => {
+                    if (!selStartRef.current || !selRect.active) return
+                    const rect = containerRef.current?.getBoundingClientRect()
+                    if (!rect) return
+                    const sx = (e.evt as MouseEvent).clientX - rect.left
+                    const sy = (e.evt as MouseEvent).clientY - rect.top
+                    const x0 = selStartRef.current.x
+                    const y0 = selStartRef.current.y
+                    const nx = Math.min(x0, sx)
+                    const ny = Math.min(y0, sy)
+                    const nw = Math.abs(sx - x0)
+                    const nh = Math.abs(sy - y0)
+                    setSelRect({ active: true, x: nx, y: ny, w: nw, h: nh })
+                }}
+                onMouseUp={(e) => {
+                    if (!selRect.active) return
+                    const additive = (e.evt as MouseEvent).ctrlKey || (e.evt as MouseEvent).metaKey
+                    const rx = selRect.x
+                    const ry = selRect.y
+                    const rw = selRect.w
+                    const rh = selRect.h
+                    const selected: string[] = []
+                    for (const [id, node] of allNodesRef.current.entries()) {
+                        const l = layersAll.find((x) => x.id === id)
+                        if (!l || !l.visible || l.locked) continue
+                        const r = node.getClientRect({ skipShadow: true, skipStroke: true })
+                        const intersects = !(r.x > rx + rw || r.x + r.width < rx || r.y > ry + rh || r.y + r.height < ry)
+                        if (intersects) selected.push(id)
+                    }
+                    if (selected.length) {
+                        if (additive) {
+                            const prev = useCanvasStore.getState().selectedLayerIds
+                            const merged = Array.from(new Set([...prev, ...selected]))
+                            useCanvasStore.getState().setSelection(merged)
+                        } else {
+                            useCanvasStore.getState().setSelection(selected)
+                        }
+                    } else if (!additive) {
+                        useCanvasStore.getState().clearSelection()
+                    }
+                    selStartRef.current = null
+                    setSelRect({ active: false, x: 0, y: 0, w: 0, h: 0 })
+                }}
+            >
+
                 <KonvaLayer>
                     {layerIds.map((id) => (
                         <LayerNode
                             key={id}
                             id={id}
-                            isSelected={selectedId === id}
+                            isSelected={selectedIds.includes(id)}
                             stageRef={stageRef}
                             clampNodeToViewport={clampNodeToViewport}
                             selectedNodeRef={selectedNodeRef}
                             scheduleDraw={scheduleDraw}
+                            registerNode={(id: string, node: Konva.Node | null) => { if (node) allNodesRef.current.set(id, node); else allNodesRef.current.delete(id) }}
                             openContextMenu={openContextMenu}
                         />
                     ))}
@@ -200,16 +266,19 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
                                 scheduleDraw(transformerRef.current?.getLayer() ?? null)
                             }}
                             onTransformEnd={() => {
-                                const node = transformerRef.current?.nodes()[0]
-                                if (!node) return
-                                const p = node.getAbsolutePosition()
-                                const rot = node.rotation()
-                                const sX = Math.min(5, Math.max(0.1, node.scaleX()))
-                                const sY = Math.min(5, Math.max(0.1, node.scaleY()))
-                                clampNodeToViewport(node)
-                                if (selectedLayer) {
-                                    if (selectedLayer.type === 'raster') {
-                                        const base = selectedLayer as RasterLayer
+                                const nodes = transformerRef.current?.nodes() || []
+                                for (const n of nodes) {
+                                    const id = [...allNodesRef.current.entries()].find(([, node]) => node === n)?.[0]
+                                    if (!id) continue
+                                    const l = layersAll.find((x) => x.id === id)
+                                    if (!l) continue
+                                    const p = n.getAbsolutePosition()
+                                    const rot = n.rotation()
+                                    const sX = Math.min(5, Math.max(0.1, n.scaleX()))
+                                    const sY = Math.min(5, Math.max(0.1, n.scaleY()))
+                                    clampNodeToViewport(n)
+                                    if (l.type === 'raster') {
+                                        const base = l as RasterLayer
                                         const minW = 10
                                         const minH = 10
                                         const nextW = Math.max(minW, Math.round(base.width * sX))
@@ -217,17 +286,20 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
                                         useCanvasStore.getState().updateLayer(base.id, { x: p.x, y: p.y, rotation: rot, width: nextW, height: nextH, scale: 1 })
                                     } else {
                                         const s = Math.max(0.1, Math.min(5, Math.abs((sX + sY) / 2)))
-                                        useCanvasStore.getState().updateLayer(selectedLayer.id, { x: p.x, y: p.y, rotation: rot, scale: s })
+                                        useCanvasStore.getState().updateLayer(l.id, { x: p.x, y: p.y, rotation: rot, scale: s })
                                     }
+                                    n.scaleX(1); n.scaleY(1)
+                                    n.position({ x: p.x, y: p.y })
                                 }
-                                node.scaleX(1); node.scaleY(1)
-                                node.position({ x: p.x, y: p.y })
                                 scheduleDraw(transformerRef.current?.getLayer() ?? null)
                             }}
                         />
                     )}
                 </KonvaLayer>
             </Stage>
+            {selRect.active && (
+                <div style={{ position: 'absolute', left: selRect.x, top: selRect.y, width: selRect.w, height: selRect.h }} className="pointer-events-none z-40 border border-blue-500/70 bg-blue-500/10" />
+            )}
             {menu.open && (
                 <div style={{ position: 'absolute', left: menu.x, top: menu.y }} className="z-50 rounded-md border border-neutral-300 bg-white shadow-lg">
                     <button className="block w-40 px-3 py-2 text-left hover:bg-neutral-100" onClick={onResetScale}>Resetear escala</button>
@@ -241,9 +313,9 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
     )
 }
 
-type LayerNodeProps = { id: string; isSelected: boolean; stageRef: React.MutableRefObject<Konva.Stage | null>; clampNodeToViewport: (node: Konva.Node) => void; selectedNodeRef: React.MutableRefObject<Konva.Node | null>; scheduleDraw: (layer?: Konva.Layer | null) => void; openContextMenu: (layerId: string, clientX: number, clientY: number) => void }
+type LayerNodeProps = { id: string; isSelected: boolean; stageRef: React.MutableRefObject<Konva.Stage | null>; clampNodeToViewport: (node: Konva.Node) => void; selectedNodeRef: React.MutableRefObject<Konva.Node | null>; scheduleDraw: (layer?: Konva.Layer | null) => void; registerNode: (id: string, node: Konva.Node | null) => void; openContextMenu: (layerId: string, clientX: number, clientY: number) => void }
 
-const LayerNode = memo(function LayerNode({ id, isSelected, stageRef, clampNodeToViewport, selectedNodeRef, scheduleDraw, openContextMenu }: LayerNodeProps) {
+const LayerNode = memo(function LayerNode({ id, isSelected, stageRef, clampNodeToViewport, selectedNodeRef, scheduleDraw, registerNode, openContextMenu }: LayerNodeProps) {
     const layer = useCanvasStore((s) => s.layers.find((l) => l.id === id), shallow)
     if (!layer) return null
     return (
@@ -255,8 +327,8 @@ const LayerNode = memo(function LayerNode({ id, isSelected, stageRef, clampNodeT
             scaleY={layer.scale}
             visible={layer.visible}
             draggable={layer.selected && !layer.locked}
-            ref={isSelected ? (node) => { selectedNodeRef.current = node as unknown as Konva.Node } : undefined}
-            onClick={() => useCanvasStore.getState().selectLayer(id)}
+            ref={(node) => { registerNode(id, node as unknown as Konva.Node | null); if (isSelected && node) selectedNodeRef.current = node as unknown as Konva.Node }}
+            onClick={(e) => { const additive = (e.evt as MouseEvent).ctrlKey || (e.evt as MouseEvent).metaKey; if (additive) useCanvasStore.getState().toggleSelectLayer(id); else useCanvasStore.getState().selectLayer(id) }}
             onMouseEnter={() => { const stage = stageRef.current; if (stage) stage.container().style.cursor = 'move' }}
             onMouseLeave={() => { const stage = stageRef.current; if (stage) stage.container().style.cursor = 'default' }}
             onDragMove={(e: Konva.KonvaEventObject<DragEvent>) => { clampNodeToViewport(e.target as Konva.Node); scheduleDraw((e.target as Konva.Node).getLayer()) }}

@@ -7,9 +7,13 @@ export interface CanvasStore {
   viewportActions: ViewportActions
   layers: AnyLayer[]
   selectedLayerId: string | null
+  selectedLayerIds: string[]
   addLayer: (layer: AnyLayer) => void
   removeLayer: (id: string) => void
   selectLayer: (id: string) => void
+  toggleSelectLayer: (id: string) => void
+  setSelection: (ids: string[]) => void
+  clearSelection: () => void
   moveLayer: (id: string, index: number) => void
   updateLayer: (id: string, partial: Partial<AnyLayer>) => void
   toggleVisibility: (id: string) => void
@@ -39,6 +43,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   },
   layers: [],
   selectedLayerId: null,
+  selectedLayerIds: [],
   addLayer: (layer: AnyLayer) => set({
     layers: [
       ...get().layers,
@@ -50,22 +55,36 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         originalRotation: layer.originalRotation ?? layer.rotation,
         ...(layer.type === 'raster'
           ? {
-              originalWidth: (layer as RasterLayer).originalWidth ?? (layer as RasterLayer).width,
-              originalHeight: (layer as RasterLayer).originalHeight ?? (layer as RasterLayer).height,
-            }
+            originalWidth: (layer as RasterLayer).originalWidth ?? (layer as RasterLayer).width,
+            originalHeight: (layer as RasterLayer).originalHeight ?? (layer as RasterLayer).height,
+          }
           : {}),
       },
     ],
   }),
-  removeLayer: (id: string) => set(({ layers, selectedLayerId }) => {
+  removeLayer: (id: string) => set(({ layers, selectedLayerId, selectedLayerIds }) => {
     const next = layers.filter((l) => l.id !== id)
-    const nextSelected = selectedLayerId === id ? null : selectedLayerId
-    return { layers: next, selectedLayerId: nextSelected }
+    const nextSelectedId = selectedLayerId === id ? null : selectedLayerId
+    const nextSelectedIds = selectedLayerIds.filter((x) => x !== id)
+    return { layers: next, selectedLayerId: nextSelectedId, selectedLayerIds: nextSelectedIds }
   }),
   selectLayer: (id: string) => set(({ layers }) => {
     const next = layers.map((l) => ({ ...l, selected: l.id === id }))
-    return { layers: next, selectedLayerId: id }
+    return { layers: next, selectedLayerId: id, selectedLayerIds: [id] }
   }),
+  toggleSelectLayer: (id: string) => set(({ layers, selectedLayerIds }) => {
+    const exists = selectedLayerIds.includes(id)
+    const nextIds = exists ? selectedLayerIds.filter((x) => x !== id) : [...selectedLayerIds, id]
+    const nextLayers = layers.map((l) => ({ ...l, selected: nextIds.includes(l.id) }))
+    const nextPrimary = nextIds.length ? nextIds[nextIds.length - 1] : null
+    return { layers: nextLayers, selectedLayerIds: nextIds, selectedLayerId: nextPrimary }
+  }),
+  setSelection: (ids: string[]) => set(({ layers }) => {
+    const nextLayers = layers.map((l) => ({ ...l, selected: ids.includes(l.id) }))
+    const nextPrimary = ids.length ? ids[ids.length - 1] : null
+    return { layers: nextLayers, selectedLayerIds: ids, selectedLayerId: nextPrimary }
+  }),
+  clearSelection: () => set(({ layers }) => ({ layers: layers.map((l) => ({ ...l, selected: false })), selectedLayerIds: [], selectedLayerId: null })),
   moveLayer: (id: string, index: number) => set(({ layers }) => {
     const currentIndex = layers.findIndex((l) => l.id === id)
     if (currentIndex === -1) return { layers }
