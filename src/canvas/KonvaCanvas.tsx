@@ -4,6 +4,7 @@ import { memo, useEffect, useRef, useState, useCallback } from 'react'
 import { useCanvasStore } from '../state/useCanvasStore'
 import type { RasterLayer, TextLayer, VectorLayer } from './layers/layer.types'
 import { cornersWorld } from './tools/handle.utils'
+import { selectByRect, applyGroupTransform, selectionCenterOBB } from './selection/selectionUtils'
 import { shallow } from 'zustand/shallow'
 
 export type KonvaCanvasProps = { width: number; height: number }
@@ -28,6 +29,15 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
     const selStartRef = useRef<{ x: number; y: number } | null>(null)
     const selStartWorldRef = useRef<{ x: number; y: number } | null>(null)
     const [selRect, setSelRect] = useState<{ active: boolean; x: number; y: number; w: number; h: number }>({ active: false, x: 0, y: 0, w: 0, h: 0 })
+    const transformSessionRef = useRef<{
+        started: boolean
+        startCenters: Map<string, { x: number; y: number }>
+        startRot: Map<string, number>
+        startScale: Map<string, number>
+        startRasterSize: Map<string, { w: number; h: number }>
+        startIds: string[]
+        center: { x: number; y: number }
+    }>({ started: false, startCenters: new Map(), startRot: new Map(), startScale: new Map(), startRasterSize: new Map(), startIds: [], center: { x: 0, y: 0 } })
 
     const scheduleDraw = useCallback((layer?: Konva.Layer | null) => {
         const l = layer ?? transformerRef.current?.getLayer() ?? stageRef.current?.getLayers()[0]
@@ -202,41 +212,7 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
                     const minY = Math.min(worldA.y, worldB.y)
                     const maxY = Math.max(worldA.y, worldB.y)
 
-                    function dot(a: { x: number; y: number }, b: { x: number; y: number }) { return a.x * b.x + a.y * b.y }
-                    function norm(v: { x: number; y: number }) { const d = Math.hypot(v.x, v.y); return d > 0 ? { x: v.x / d, y: v.y / d } : { x: 0, y: 0 } }
-                    function projectInterval(points: { x: number; y: number }[], axis: { x: number; y: number }): { min: number; max: number } {
-                        let min = dot(points[0], axis), max = min
-                        for (let i = 1; i < points.length; i++) { const p = dot(points[i], axis); if (p < min) min = p; if (p > max) max = p }
-                        return { min, max }
-                    }
-                    function intersectsOBBWithAABB(corners: { x: number; y: number }[]): boolean {
-                        const axes = [norm({ x: corners[1].x - corners[0].x, y: corners[1].y - corners[0].y }), norm({ x: corners[3].x - corners[0].x, y: corners[3].y - corners[0].y }), { x: 1, y: 0 }, { x: 0, y: 1 }]
-                        const rectCorners = [
-                            { x: minX, y: minY },
-                            { x: maxX, y: minY },
-                            { x: maxX, y: maxY },
-                            { x: minX, y: maxY },
-                        ]
-                        for (const axis of axes) {
-                            const pPoly = projectInterval(corners, axis)
-                            const pRect = projectInterval(rectCorners, axis)
-                            if (pPoly.max < pRect.min || pRect.max < pPoly.min) return false
-                        }
-                        return true
-                    }
-                    const selected: string[] = []
-                    for (const [id] of allNodesRef.current.entries()) {
-                        const l = layersAll.find((x) => x.id === id)
-                        if (!l || !l.visible || l.locked) continue
-                        const corners = cornersWorld(l)
-                        let intersects = false
-                        if (selectionMode === 'intersect') {
-                            intersects = intersectsOBBWithAABB(corners)
-                        } else {
-                            intersects = corners.every((c) => c.x >= minX && c.x <= maxX && c.y >= minY && c.y <= maxY)
-                        }
-                        if (intersects) selected.push(id)
-                    }
+                    const selected = selectByRect(layersAll, { minX, minY, maxX, maxY }, selectionMode)
                     if (selected.length) {
                         if (additive) {
                             const prev = useCanvasStore.getState().selectedLayerIds
@@ -292,6 +268,27 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
                             onTransform={() => {
                                 const node = transformerRef.current?.nodes()[0]
                                 if (!node) return
+                                if (!transformSessionRef.current.started) {
+                                    const ids = useCanvasStore.getState().selectedLayerIds
+                                    transformSessionRef.current.startIds = ids.slice()
+                                    transformSessionRef.current.center = selectionCenterOBB(layersAll, ids)
+                                    transformSessionRef.current.startCenters.clear()
+                                    transformSessionRef.current.startRot.clear()
+                                    transformSessionRef.current.startScale.clear()
+                                    transformSessionRef.current.startRasterSize.clear()
+                                    for (const id of ids) {
+                                        const l = layersAll.find((x) => x.id === id)
+                                        if (!l || !l.visible || l.locked) continue
+                                        const c = cornersWorld(l)
+                                        const cx = (c[0].x + c[2].x) / 2
+                                        const cy = (c[0].y + c[2].y) / 2
+                                        transformSessionRef.current.startCenters.set(id, { x: cx, y: cy })
+                                        transformSessionRef.current.startRot.set(id, l.rotation)
+                                        transformSessionRef.current.startScale.set(id, l.scale)
+                                        if (l.type === 'raster') transformSessionRef.current.startRasterSize.set(id, { w: (l as RasterLayer).width, h: (l as RasterLayer).height })
+                                    }
+                                    transformSessionRef.current.started = true
+                                }
                                 const sx = Math.min(5, Math.max(0.1, node.scaleX()))
                                 const sy = Math.min(5, Math.max(0.1, node.scaleY()))
                                 node.scaleX(sx)
@@ -301,30 +298,36 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
                             }}
                             onTransformEnd={() => {
                                 const nodes = transformerRef.current?.nodes() || []
+                                let deltaRot = 0
+                                if (nodes.length) {
+                                    const nid = [...allNodesRef.current.entries()].find(([, node]) => node === nodes[0])?.[0]
+                                    if (nid) {
+                                        const startR = transformSessionRef.current.startRot.get(nid) ?? 0
+                                        deltaRot = nodes[0].rotation() - startR
+                                    }
+                                }
+                                let accS = 0
                                 for (const n of nodes) {
-                                    const id = [...allNodesRef.current.entries()].find(([, node]) => node === n)?.[0]
-                                    if (!id) continue
-                                    const l = layersAll.find((x) => x.id === id)
-                                    if (!l) continue
-                                    const p = n.getAbsolutePosition()
-                                    const rot = n.rotation()
                                     const sX = Math.min(5, Math.max(0.1, n.scaleX()))
                                     const sY = Math.min(5, Math.max(0.1, n.scaleY()))
-                                    clampNodeToViewport(n)
-                                    if (l.type === 'raster') {
-                                        const base = l as RasterLayer
-                                        const minW = 10
-                                        const minH = 10
-                                        const nextW = Math.max(minW, Math.round(base.width * sX))
-                                        const nextH = Math.max(minH, Math.round(base.height * sY))
-                                        useCanvasStore.getState().updateLayer(base.id, { x: p.x, y: p.y, rotation: rot, width: nextW, height: nextH, scale: 1 })
+                                    accS += Math.abs((sX + sY) / 2)
+                                }
+                                const scale = nodes.length ? accS / nodes.length : 1
+                                const ids = transformSessionRef.current.startIds
+                                const updates = applyGroupTransform(layersAll, ids, deltaRot, scale)
+                                for (const u of updates) {
+                                    if ('width' in u && 'height' in u) {
+                                        useCanvasStore.getState().updateLayer(u.id, { x: u.x, y: u.y, rotation: u.rotation, width: u.width as number, height: u.height as number, scale: 1 })
                                     } else {
-                                        const s = Math.max(0.1, Math.min(5, Math.abs((sX + sY) / 2)))
-                                        useCanvasStore.getState().updateLayer(l.id, { x: p.x, y: p.y, rotation: rot, scale: s })
+                                        useCanvasStore.getState().updateLayer(u.id, { x: u.x, y: u.y, rotation: u.rotation, scale: u.scale as number })
                                     }
+                                }
+                                for (const n of nodes) {
+                                    const p = n.getAbsolutePosition()
                                     n.scaleX(1); n.scaleY(1)
                                     n.position({ x: p.x, y: p.y })
                                 }
+                                transformSessionRef.current.started = false
                                 scheduleDraw(transformerRef.current?.getLayer() ?? null)
                             }}
                         />
