@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DTF Europe Tech - Funcionalidades Fase 1 (Definitivo)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0066FF;
+            --primary-dark: #0052CC;
+            --secondary: #00C853;
+            --accent: #7C3AED;
+            --accent-light: #A78BFA;
+            --warning: #FF9800;
+            --danger: #F44336;
+            --dark: #1a1a2e;
+            --darker: #0f0f1a;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --gray-light: #e9ecef;
+            --gold: #FFD700;
+            --border-radius: 16px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            line-height: 1.7;
+            font-size: 16px;
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, var(--dark) 0%, var(--darker) 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+
+        .header .version {
+            display: inline-block;
+            background: var(--primary);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .header .definitive {
+            background: var(--secondary);
+            margin-left: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* SECTIONS */
+        .section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-title .number {
+            background: var(--primary);
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .section-title .number.accent {
+            background: var(--accent);
+        }
+
+        /* FUNCTIONALITY CARD */
+        .func-card {
+            background: var(--light);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 25px;
+            border-left: 5px solid var(--primary);
+        }
+
+        .func-card.critical {
+            border-left-color: var(--danger);
+            background: #fff5f5;
+        }
+
+        .func-card.important {
+            border-left-color: var(--warning);
+            background: #fffbf0;
+        }
+
+        .func-card.new {
+            border-left-color: var(--accent);
+            background: #f5f3ff;
+        }
+
+        .func-card.highlight-3d {
+            border-left-color: var(--gold);
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-left-width: 8px;
+        }
+
+        .func-card h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .func-card h3 .tag {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .tag.critical {
+            background: var(--danger);
+            color: white;
+        }
+
+        .tag.important {
+            background: var(--warning);
+            color: white;
+        }
+
+        .tag.new {
+            background: var(--accent);
+            color: white;
+        }
+
+        .tag.added {
+            background: #dc2626;
+            color: white;
+        }
+
+        .func-card p {
+            color: var(--gray);
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+        }
+
+        .func-card p:last-child {
+            margin-bottom: 0;
+        }
+
+        .func-card strong {
+            color: var(--dark);
+        }
+
+        /* VISUAL DIAGRAMS */
+        .diagram {
+            background: white;
+            border: 2px solid var(--gray-light);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+        }
+
+        .diagram-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* FLOW BOXES */
+        .flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .flow-box {
+            background: var(--primary);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-align: center;
+            min-width: 140px;
+        }
+
+        .flow-box.secondary {
+            background: var(--secondary);
+        }
+
+        .flow-box.accent {
+            background: var(--accent);
+        }
+
+        .flow-box.warning {
+            background: var(--warning);
+        }
+
+        .flow-box.outline {
+            background: white;
+            color: var(--dark);
+            border: 2px solid var(--gray-light);
+        }
+
+        .flow-arrow {
+            font-size: 1.5rem;
+            color: var(--gray);
+        }
+
+        /* PRODUCT CHOICE - HERO SECTION */
+        .product-hero {
+            display: grid;
+            grid-template-columns: 1.3fr 0.7fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .product-card-3d {
+            background: linear-gradient(135deg, var(--accent) 0%, #5B21B6 100%);
+            border-radius: 20px;
+            padding: 40px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(124, 58, 237, 0.4);
+        }
+
+        .product-card-3d::before {
+            content: '3D';
+            position: absolute;
+            top: -30px;
+            right: -30px;
+            font-size: 150px;
+            font-weight: 900;
+            opacity: 0.1;
+            line-height: 1;
+        }
+
+        .product-card-3d .badge {
+            display: inline-block;
+            background: var(--gold);
+            color: var(--dark);
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .product-card-3d h3 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .product-card-3d h3 .icon {
+            font-size: 3rem;
+        }
+
+        .product-card-3d > p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 25px;
+        }
+
+        .product-card-3d ul {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 30px;
+        }
+
+        .product-card-3d li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+            font-size: 1rem;
+        }
+
+        .product-card-3d li::before {
+            content: "★";
+            position: absolute;
+            left: 0;
+            color: var(--gold);
+        }
+
+        .product-card-3d .cta {
+            display: inline-block;
+            background: white;
+            color: var(--accent);
+            padding: 16px 40px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .product-card-3d .cta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .product-card-normal {
+            background: white;
+            border: 2px solid var(--gray-light);
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-card-normal h3 {
+            font-size: 1.4rem;
+            color: var(--dark);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .product-card-normal > p {
+            color: var(--gray);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .product-card-normal ul {
+            list-style: none;
+            padding: 0;
+            flex-grow: 1;
+        }
+
+        .product-card-normal li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .product-card-normal li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .product-card-normal .cta {
+            display: block;
+            background: var(--light);
+            color: var(--dark);
+            padding: 14px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            margin-top: 20px;
+            border: 2px solid var(--gray-light);
+        }
+
+        /* COMPARISON TABLE */
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .comparison-box {
+            background: white;
+            border: 2px solid var(--gray-light);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .comparison-box h4 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .comparison-box.mode-3d {
+            border-color: var(--accent);
+            border-width: 3px;
+            background: #faf5ff;
+        }
+
+        .comparison-box.mode-3d h4 {
+            color: var(--accent);
+        }
+
+        .comparison-box.mode-normal {
+            border-color: var(--secondary);
+            border-width: 3px;
+            background: #f0fdf4;
+        }
+
+        .comparison-box.mode-normal h4 {
+            color: var(--secondary);
+        }
+
+        .comparison-box ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .comparison-box li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: var(--gray);
+        }
+
+        .comparison-box li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .comparison-box li.no::before {
+            content: "✗";
+            color: var(--danger);
+        }
+
+        /* INFO BOXES */
+        .info-box {
+            background: #e8f4fd;
+            border-left: 4px solid var(--primary);
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .info-box.warning {
+            background: #fff8e6;
+            border-left-color: var(--warning);
+        }
+
+        .info-box.success {
+            background: #e8f8ee;
+            border-left-color: var(--secondary);
+        }
+
+        .info-box.danger {
+            background: #fde8e8;
+            border-left-color: var(--danger);
+        }
+
+        .info-box.accent {
+            background: #f5f3ff;
+            border-left-color: var(--accent);
+        }
+
+        .info-box-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* LISTS */
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 12px 0;
+            padding-left: 30px;
+            position: relative;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-list li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* TABLE OF CONTENTS */
+        .toc {
+            background: var(--light);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .toc h3 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: var(--dark);
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 10px;
+        }
+
+        .toc-list li a {
+            display: block;
+            padding: 12px 15px;
+            background: white;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: all 0.2s;
+            border: 1px solid var(--gray-light);
+            font-size: 0.95rem;
+        }
+
+        .toc-list li a:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .toc-list li a span {
+            color: var(--primary);
+            margin-right: 8px;
+            font-weight: 700;
+        }
+
+        .toc-list li a:hover span {
+            color: white;
+        }
+
+        .toc-list li a.highlight {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .toc-list li a.highlight span {
+            color: var(--gold);
+        }
+
+        /* PENDING TAG */
+        .pending {
+            display: inline-block;
+            background: var(--warning);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* ADMIN TAG */
+        .admin-tag {
+            display: inline-block;
+            background: var(--dark);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        /* UI MOCKUP */
+        .ui-mockup {
+            background: var(--darker);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 25px 0;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .ui-titlebar {
+            background: var(--dark);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ui-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .ui-dot.red { background: #ff5f57; }
+        .ui-dot.yellow { background: #ffbd2e; }
+        .ui-dot.green { background: #28c840; }
+
+        .ui-titlebar span {
+            color: white;
+            margin-left: 15px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .ui-content {
+            display: grid;
+            grid-template-columns: 220px 1fr 280px;
+            min-height: 500px;
+        }
+
+        .ui-sidebar {
+            background: #1e1e2e;
+            padding: 20px;
+            color: white;
+        }
+
+        .ui-sidebar h5 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gray);
+            margin-bottom: 12px;
+            margin-top: 20px;
+        }
+
+        .ui-sidebar h5:first-child {
+            margin-top: 0;
+        }
+
+        .ui-menu-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.2s;
+        }
+
+        .ui-menu-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .ui-menu-item.active {
+            background: var(--accent);
+        }
+
+        .ui-menu-item.completed {
+            background: rgba(0,200,83,0.2);
+            color: var(--secondary);
+        }
+
+        .ui-canvas {
+            background: #2a2a3e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .ui-canvas-placeholder {
+            width: 320px;
+            height: 320px;
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.4);
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .ui-panel {
+            background: #1e1e2e;
+            padding: 20px;
+            color: white;
+            overflow-y: auto;
+        }
+
+        .ui-panel-section {
+            margin-bottom: 25px;
+        }
+
+        .ui-panel-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-light);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .ui-input-group {
+            margin-bottom: 12px;
+        }
+
+        .ui-label {
+            font-size: 0.75rem;
+            color: var(--gray);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .ui-input {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .ui-select {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        .ui-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            font-size: 0.85rem;
+        }
+
+        .ui-checkbox input {
+            width: 16px;
+            height: 16px;
+        }
+
+        .ui-button {
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .ui-button.secondary {
+            background: var(--secondary);
+        }
+
+        .ui-info-bar {
+            background: rgba(124, 58, 237, 0.2);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            margin-bottom: 15px;
+            border: 1px solid var(--accent);
+        }
+
+        /* ROADMAP */
+        .roadmap {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .roadmap-item {
+            background: var(--light);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 2px dashed var(--gray-light);
+        }
+
+        .roadmap-item .version {
+            display: inline-block;
+            background: var(--gray);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .roadmap-item h4 {
+            font-size: 1rem;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .roadmap-item p {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .comparison, .product-hero {
+                grid-template-columns: 1fr;
+            }
+            
+            .ui-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .ui-sidebar, .ui-panel {
+                display: none;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .product-card-3d h3 {
+                font-size: 1.6rem;
+            }
+        }
+
+        /* PRINT */
+        @media print {
+            .section {
+                break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid var(--gray-light);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+    <div>
+        <span class="version">FASE 1</span>
+        <span class="version definitive">DOCUMENTO DEFINITIVO</span>
+    </div>
+    <h1>DTF EUROPE TECH</h1>
+    <p>Especificaciones Funcionales para Desarrollo<br>
+    <strong>Software de Preimpresión DTF - El cliente prepara su trabajo antes de comprar</strong></p>
+</header>
+
+<div class="container">
+
+    <!-- CONTEXT -->
+    <section class="section" style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border-left: 5px solid var(--accent);">
+        <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: var(--dark);">🎯 ¿Qué es DTF Europe Tech?</h2>
+        <p style="font-size: 1.1rem; margin-bottom: 15px;">
+            Es un <strong>software de preimpresión online</strong> donde el cliente (comprador) prepara su diseño 
+            con todos los efectos antes de hacer el pedido.
+        </p>
+        <p style="font-size: 1.1rem; margin-bottom: 15px;">
+            El cliente sube su logo, configura los efectos que quiere, descarga los archivos listos 
+            y luego hace el pedido en la tienda (o lo imprime en su propia máquina).
+        </p>
+
+        <div class="info-box accent" style="margin-bottom: 0;">
+            <div class="info-box-title">⭐ Gancho Principal: DTF 3D</div>
+            <p>
+                El <strong>módulo 3D</strong> es el producto estrella y diferenciador. 
+                Debe ser visualmente el protagonista del software: más destacado, más llamativo, 
+                el "wow factor" que atraerá clientes.
+            </p>
+        </div>
+    </section>
+
+    <!-- TABLE OF CONTENTS -->
+    <nav class="toc">
+        <h3>📋 Índice de Funcionalidades</h3>
+        <ul class="toc-list">
+            <li><a href="#flujo" class="highlight"><span>1</span> Flujo y Elección de Producto</a></li>
+            <li><a href="#comunes"><span>2</span> Funcionalidades Comunes</a></li>
+            <li><a href="#3d" class="highlight"><span>3</span> 🌟 Módulo DTF 3D (Corte)</a></li>
+            <li><a href="#normal"><span>4</span> Módulo DTF Normal (Rollo)</a></li>
+            <li><a href="#texturas"><span>5</span> Gestión Texturas (Backend)</a></li>
+            <li><a href="#backend"><span>6</span> Configuración Backend</a></li>
+            <li><a href="#dxf"><span>7</span> Generación DXF</a></li>
+            <li><a href="#exportacion"><span>8</span> Descarga de Archivos</a></li>
+            <li><a href="#proyectos"><span>9</span> Guardar Proyectos</a></li>
+            <li><a href="#licencias"><span>10</span> Sistema de Licencias</a></li>
+            <li><a href="#ui"><span>11</span> Propuesta UI/UX</a></li>
+            <li><a href="#roadmap"><span>12</span> Próximas Versiones</a></li>
+        </ul>
+    </nav>
+
+    <!-- SECTION 1: FLUJO Y ELECCIÓN -->
+    <section class="section" id="flujo">
+        <h2 class="section-title">
+            <span class="number accent">1</span>
+            Flujo y Elección de Producto
+        </h2>
+
+        <p style="font-size: 1.1rem; margin-bottom: 25px;">
+            Cuando el cliente entra al software, lo <strong>PRIMERO</strong> que debe elegir es qué tipo de trabajo quiere hacer. 
+            Esta decisión determina todo el flujo posterior.
+        </p>
+
+        <div class="product-hero">
+            <!-- 3D CARD - PROTAGONISTA -->
+            <div class="product-card-3d">
+                <div class="badge">⭐ PRODUCTO ESTRELLA</div>
+                <h3><span class="icon">🎨</span> DTF 3D con Corte</h3>
+                <p>Crea diseños con efectos de relieve 3D profesionales. Texturas, capas de blanco, barniz premium y corte automático.</p>
+                <ul>
+                    <li>Efectos de relieve 3D táctiles</li>
+                    <li>Texturas profesionales personalizables</li>
+                    <li>Capas de blanco para profundidad</li>
+                    <li>Barniz sólido o degradado</li>
+                    <li>Corte automático incluido (DXF)</li>
+                    <li>Resultado premium profesional</li>
+                </ul>
+                <a href="#" class="cta">🚀 CREAR DISEÑO 3D</a>
+            </div>
+
+            <!-- NORMAL CARD - SECUNDARIO -->
+            <div class="product-card-normal">
+                <h3>📏 DTF Normal en Rollo</h3>
+                <p>Impresión estándar sin efectos. Ideal para grandes cantidades.</p>
+                <ul>
+                    <li>Múltiples diseños diferentes</li>
+                    <li>Elige cantidad de cada uno</li>
+                    <li>Por metros de rollo</li>
+                    <li>Sin corte (tú cortas)</li>
+                    <li>Descarga PNG(s)</li>
+                </ul>
+                <a href="#" class="cta">Crear diseño normal</a>
+            </div>
+        </div>
+
+        <div class="info-box danger">
+            <div class="info-box-title">🔴 Regla Fundamental</div>
+            <p>
+                <strong>3D = CORTE SIEMPRE</strong><br>
+                El TPU del 3D siempre hay que cortarlo. Si el cliente elige efectos 3D, 
+                obligatoriamente irá cortado. No puede elegir "en rollo" con efectos 3D.
+            </p>
+        </div>
+
+        <div class="diagram">
+            <div class="diagram-title">Diagrama: Flujo según Elección</div>
+<pre>
+                              CLIENTE ENTRA
+                                   │
+                                   ▼
+                    ┌──────────────────────────────┐
+                    │   ¿QUÉ QUIERES HACER?        │
+                    └──────────────┬───────────────┘
+                                   │
+              ┌────────────────────┴────────────────────┐
+              │                                        │
+              ▼                                        ▼
+    ┌─────────────────────┐              ┌─────────────────────┐
+    │  🎨 DTF 3D          │              │  📏 DTF NORMAL      │
+    │  (con corte)        │              │  (en rollo)         │
+    │                     │              │                     │
+    │  GANCHO PRINCIPAL   │              │  Opción secundaria  │
+    └──────────┬──────────┘              └──────────┬──────────┘
+               │                                    │
+               ▼                                    ▼
+    ┌─────────────────────┐              ┌─────────────────────┐
+    │ • Sube 1 diseño     │              │ • Sube varios       │
+    │ • Aplica efectos    │              │ • Sin efectos       │
+    │ • Configura corte   │              │ • Elige cantidades  │
+    │ • 1 hoja            │              │ • Por metros        │
+    └──────────┬──────────┘              └──────────┬──────────┘
+               │                                    │
+               ▼                                    ▼
+    ┌─────────────────────┐              ┌─────────────────────┐
+    │ DESCARGA:           │              │ DESCARGA:           │
+    │ • PDF/PSD/TIFF      │              │ • PNG (uno o varios)│
+    │ • DXF (corte)       │              │                     │
+    └─────────────────────┘              └─────────────────────┘
+</pre>
+        </div>
+
+        <div class="comparison">
+            <div class="comparison-box mode-3d">
+                <h4>🎨 DTF 3D (Corte)</h4>
+                <ul>
+                    <li><strong>1 solo modelo</strong> de diseño</li>
+                    <li>Texturas, blancos, barniz</li>
+                    <li>Detección de forma automática</li>
+                    <li>Opciones de corte</li>
+                    <li>Hoja predefinida</li>
+                    <li>Genera: PDF/PSD/TIFF + DXF</li>
+                </ul>
+            </div>
+
+            <div class="comparison-box mode-normal">
+                <h4>📏 DTF Normal (Rollo)</h4>
+                <ul>
+                    <li><strong>Múltiples diseños</strong> mezclados</li>
+                    <li class="no">Sin efectos 3D</li>
+                    <li>Elegir cantidad de cada diseño</li>
+                    <li>Rotación automática + manual</li>
+                    <li>Por metros de rollo</li>
+                    <li>Genera: PNG(s)</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: FUNCIONALIDADES COMUNES -->
+    <section class="section" id="comunes">
+        <h2 class="section-title">
+            <span class="number">2</span>
+            Funcionalidades Comunes (Ambos Modos)
+        </h2>
+
+        <p style="margin-bottom: 25px;">
+            Estas funcionalidades están disponibles tanto en DTF 3D como en DTF Normal.
+        </p>
+
+        <!-- CARGA DE ARCHIVOS -->
+        <div class="func-card">
+            <h3>📂 Cargar Diseño</h3>
+            <p>El cliente sube su logo o diseño arrastrándolo o seleccionándolo de su ordenador.</p>
+            
+            <div class="info-box">
+                <div class="info-box-title">📄 Formatos Aceptados</div>
+                <ul class="feature-list">
+                    <li><strong>PDF</strong> - Archivos vectoriales</li>
+                    <li><strong>TIFF</strong> - Imágenes de alta calidad</li>
+                    <li><strong>PNG</strong> - Imágenes con fondo transparente</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- VALIDACIÓN DE CALIDAD -->
+        <div class="func-card critical">
+            <h3>
+                🔍 Validación de Calidad del Archivo
+                <span class="tag critical">CRÍTICO</span>
+            </h3>
+            <p>
+                El programa debe validar la calidad del archivo subido y <strong>avisar al cliente</strong> 
+                si hay problemas.
+            </p>
+
+            <div class="info-box danger">
+                <div class="info-box-title">⚠️ Validaciones Obligatorias</div>
+                <ul class="feature-list">
+                    <li><strong>Resolución mínima:</strong> 150 DPI (si no es vector)</li>
+                    <li><strong>Aviso si está pixelado:</strong> "Este archivo puede no quedar bien impreso"</li>
+                    <li><strong>Mostrar SIEMPRE:</strong> Resolución en DPI + Tamaño en cm (ancho × alto)</li>
+                </ul>
+            </div>
+
+            <div class="diagram">
+                <div class="diagram-title">Ejemplo: Información del Archivo</div>
+<pre>
+    ┌─────────────────────────────────────────────────────────────┐
+    │  📄 logo_cliente.png                                        │
+    │                                                             │
+    │  Resolución: 300 DPI ✓                                      │
+    │  Tamaño: 15 × 12 cm                                         │
+    │  Estado: ✅ Calidad óptima para impresión                   │
+    └─────────────────────────────────────────────────────────────┘
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │  📄 logo_baja_calidad.jpg                                   │
+    │                                                             │
+    │  Resolución: 72 DPI ⚠️                                      │
+    │  Tamaño: 8 × 6 cm                                           │
+    │  Estado: ⚠️ AVISO: Resolución baja, puede salir pixelado   │
+    └─────────────────────────────────────────────────────────────┘
+</pre>
+            </div>
+        </div>
+
+        <!-- ESCALAR IMAGEN -->
+        <div class="func-card new">
+            <h3>
+                📐 Escalar y Redimensionar Imagen
+                <span class="tag added">AÑADIDO</span>
+            </h3>
+            <p>
+                El cliente puede cambiar el tamaño de su diseño. Puede usar IA o el algoritmo 
+                que los desarrolladores consideren mejor, pero <strong>debe funcionar al 100%</strong>.
+            </p>
+
+            <div class="info-box success">
+                <div class="info-box-title">✅ Funcionalidades de Escalado</div>
+                <ul class="feature-list">
+                    <li><strong>Cambiar tamaño:</strong> Introducir ancho y/o alto en cm</li>
+                    <li><strong>Mantener proporción:</strong> Opción de bloquear ratio</li>
+                    <li><strong>Escalar con calidad:</strong> Usar IA o algoritmo de alta calidad</li>
+                    <li><strong>Vista previa en tiempo real</strong></li>
+                </ul>
+            </div>
+
+            <div class="diagram">
+                <div class="diagram-title">Ejemplo: Panel de Escalado</div>
+<pre>
+    ┌─────────────────────────────────────────┐
+    │  📐 TAMAÑO                              │
+    │                                         │
+    │  Ancho:  [ 15    ] cm                   │
+    │  Alto:   [ 12    ] cm                   │
+    │                                         │
+    │  [✓] Mantener proporción                │
+    │                                         │
+    │  Resolución resultante: 300 DPI ✓       │
+    └─────────────────────────────────────────┘
+</pre>
+            </div>
+        </div>
+
+        <!-- ELIMINAR FONDO -->
+        <div class="func-card new">
+            <h3>
+                🎭 Eliminar Fondo de Imagen
+                <span class="tag added">AÑADIDO</span>
+            </h3>
+            <p>
+                El cliente puede eliminar el fondo de su imagen automáticamente. 
+                Útil cuando el diseño viene con fondo blanco o de color.
+            </p>
+
+            <div class="diagram">
+                <div class="diagram-title">Ejemplo: Antes y Después</div>
+<pre>
+    ANTES                              DESPUÉS
+    ┌─────────────────┐                ┌─────────────────┐
+    │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│                │                 │
+    │▓▓▓┌───────┐▓▓▓▓▓│                │   ┌───────┐     │
+    │▓▓▓│ LOGO  │▓▓▓▓▓│      →         │   │ LOGO  │     │
+    │▓▓▓└───────┘▓▓▓▓▓│                │   └───────┘     │
+    │▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│                │                 │
+    └─────────────────┘                └─────────────────┘
+    
+    ▓ = Fondo                          (transparente)
+</pre>
+            </div>
+
+            <div class="flow">
+                <div class="flow-box outline">Imagen con fondo</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-box accent">Clic "Eliminar fondo"</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-box secondary">Fondo eliminado ✓</div>
+            </div>
+        </div>
+
+        <!-- VISTA PREVIA -->
+        <div class="func-card important">
+            <h3>
+                👁️ Vista Previa en Tiempo Real
+                <span class="tag important">IMPORTANTE</span>
+            </h3>
+            <p>
+                <strong>SIEMPRE</strong> debe haber vista previa en tiempo real. 
+                Cuando el cliente aplique efectos, cambie tamaño, o configure cualquier cosa, 
+                debe ver el resultado inmediatamente.
+            </p>
+        </div>
+
+        <!-- TÉRMINOS Y CONDICIONES -->
+        <div class="func-card">
+            <h3>📜 Términos y Condiciones</h3>
+            <p>
+                Antes de descargar los archivos, el cliente debe aceptar los términos y condiciones. 
+                Debe quedar un <strong>registro LOG</strong> de esta aceptación.
+            </p>
+
+            <div class="info-box warning">
+                <div class="info-box-title">⚠️ Exención de Responsabilidad</div>
+                <p>
+                    Si el cliente genera un archivo con errores técnicos, es bajo su responsabilidad. 
+                    <strong>FORTE PRINTERS GROUP SLU queda exento del resultado.</strong>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 3: MÓDULO DTF 3D -->
+    <section class="section" id="3d" style="background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border: 3px solid var(--accent);">
+        <h2 class="section-title">
+            <span class="number accent">3</span>
+            🌟 Módulo DTF 3D (Con Corte) - GANCHO PRINCIPAL
+        </h2>
+
+        <div class="info-box accent">
+            <div class="info-box-title">⭐ Este es el Producto Estrella</div>
+            <p>
+                El módulo 3D debe ser visualmente el protagonista del software. 
+                Es el diferenciador que atraerá clientes. Todos los efectos de relieve, 
+                texturas y acabados premium están aquí.
+            </p>
+        </div>
+
+        <!-- HERRAMIENTAS DE SELECCIÓN -->
+        <div class="func-card highlight-3d">
+            <h3>🪄 Herramientas de Selección</h3>
+            <p>
+                El cliente selecciona partes del diseño para aplicar efectos.
+            </p>
+
+            <ul class="feature-list">
+                <li><strong>Varita Mágica:</strong> Clic en un color → selecciona todo ese color</li>
+                <li><strong>Rectángulo:</strong> Dibuja un rectángulo de selección</li>
+                <li><strong>Lazo:</strong> Dibuja a mano alzada alrededor de lo que quiere</li>
+            </ul>
+        </div>
+
+        <!-- CANALES SPOT -->
+        <div class="func-card highlight-3d">
+            <h3>
+                🎨 Canales Spot con Texturas
+                <span class="tag critical">CRÍTICO</span>
+            </h3>
+            <p>
+                El cliente selecciona una zona y le aplica una <strong>textura</strong> que creará 
+                el efecto de relieve 3D.
+            </p>
+
+            <div class="flow">
+                <div class="flow-box outline">Seleccionar área</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-box accent">Elegir textura</div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-box secondary">Aplicar ✓</div>
+            </div>
+
+            <div class="info-box danger">
+                <div class="info-box-title">🔴 Las Texturas son Negro Puro</div>
+                <p>
+                    Las texturas SIEMPRE son en <strong>negro puro</strong> (RGB 0,0,0).<br>
+                    NO pueden tener grises. Solo negro o transparente.
+                </p>
+            </div>
+        </div>
+
+        <!-- CAPAS DE BLANCO -->
+        <div class="func-card highlight-3d">
+            <h3>🤍 Capas de Blanco</h3>
+            <p>
+                Para crear el efecto 3D de relieve, se ponen varias capas de tinta blanca. 
+                Cada capa puede tener una textura diferente.
+            </p>
+
+            <ul class="feature-list">
+                <li><strong>Blanco Base:</strong> Capa sólida obligatoria (sin textura)</li>
+                <li><strong>Blanco + Textura 1:</strong> Primera capa texturizada</li>
+                <li><strong>Blanco + Textura 2:</strong> Segunda capa (opcional)</li>
+                <li><strong>Blanco + Textura 3:</strong> Tercera capa (opcional)</li>
+            </ul>
+
+            <p>Más capas = Más relieve = Más efecto 3D</p>
+        </div>
+
+        <!-- BARNIZ -->
+        <div class="func-card highlight-3d">
+            <h3>✨ Canal de Barniz</h3>
+            <p>
+                Capa transparente que da brillo al diseño.
+            </p>
+
+            <div class="comparison">
+                <div class="comparison-box">
+                    <h4>Barniz Sólido</h4>
+                    <p>Brillo uniforme al 100%</p>
+                </div>
+                <div class="comparison-box">
+                    <h4>Barniz Degradado</h4>
+                    <p>Brillo variable (0-100%)</p>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-box-title">💡 Nota</div>
+                <p>El barniz es el <strong>ÚNICO</strong> que puede tener degradados (grises).</p>
+            </div>
+        </div>
+
+        <!-- DETECCIÓN DE FORMA -->
+        <div class="func-card highlight-3d">
+            <h3>
+                🔍 Detección Automática de Forma
+                <span class="tag critical">CRÍTICO</span>
+            </h3>
+            <p>
+                El programa detecta automáticamente la forma del diseño 
+                (escudo, círculo, rectángulo, etc.) para crear el perfil de corte 
+                sin que el cliente tenga que dibujarlo.
+            </p>
+
+            <div class="diagram">
+                <div class="diagram-title">Ejemplo</div>
+<pre>
+    ENTRADA                           DETECCIÓN
+    ┌─────────────────┐               
+    │    ╱─────╲      │               "Forma detectada: ESCUDO"
+    │   │ F C B │     │      →        
+    │    ╲─────╱      │               Perfil de corte generado ✓
+    └─────────────────┘               
+</pre>
+            </div>
+        </div>
+
+        <!-- FONDO STICKER -->
+        <div class="func-card highlight-3d">
+            <h3>🏷️ Fondo Tipo Sticker</h3>
+            <p>
+                Si el diseño tiene letras o elementos separados, el programa puede 
+                generar un fondo blanco que los une.
+            </p>
+        </div>
+
+        <!-- IMPOSICIÓN 3D -->
+        <div class="func-card highlight-3d">
+            <h3>📐 Imposición (1 Solo Modelo)</h3>
+            <p>
+                El programa distribuye el logo en la hoja. En modo 3D solo se permite 
+                <strong>1 modelo de diseño</strong> repetido.
+            </p>
+
+            <div class="info-box warning">
+                <div class="info-box-title">⚠️ Importante</div>
+                <p>
+                    El cliente prepara <strong>1 hoja</strong>. Luego cuando haga el pedido 
+                    o lo ponga en su máquina, decidirá cuántas repeticiones quiere.
+                </p>
+            </div>
+
+            <p><strong>Tamaños de hoja:</strong> <span class="pending">A DEFINIR</span></p>
+        </div>
+
+        <!-- OPCIONES DE CORTE -->
+        <div class="func-card highlight-3d">
+            <h3>✂️ Opciones de Corte</h3>
+            <p>El cliente elige cómo quiere que se corte:</p>
+
+            <ul class="feature-list">
+                <li><strong>Perfil exacto + Sangrado:</strong> Sigue el contorno del logo con margen de seguridad</li>
+                <li><strong>Rectángulo con margen:</strong> Corta un rectángulo alrededor</li>
+                <li><strong>Cortes transversales:</strong> Líneas horizontales y verticales cada X cm</li>
+            </ul>
+        </div>
+
+        <!-- SALIDA 3D -->
+        <div class="func-card highlight-3d">
+            <h3>
+                💾 Archivos de Salida (3D)
+                <span class="tag important">IMPORTANTE</span>
+            </h3>
+            
+            <p><strong>Archivo de impresión</strong> (el cliente elige):</p>
+            <div style="display: flex; gap: 15px; margin: 15px 0; flex-wrap: wrap;">
+                <div style="background: white; padding: 15px 25px; border-radius: 8px; text-align: center; border: 2px solid var(--gray-light);">
+                    <strong>PDF</strong>
+                </div>
+                <div style="background: white; padding: 15px 25px; border-radius: 8px; text-align: center; border: 2px solid var(--gray-light);">
+                    <strong>PSD</strong>
+                </div>
+                <div style="background: white; padding: 15px 25px; border-radius: 8px; text-align: center; border: 2px solid var(--gray-light);">
+                    <strong>TIFF</strong>
+                </div>
+            </div>
+
+            <p><strong>Archivo de corte</strong> (siempre):</p>
+            <div style="background: var(--accent); color: white; padding: 15px 25px; border-radius: 8px; text-align: center; display: inline-block; margin: 15px 0;">
+                <strong>DXF</strong> (con CUTMARKS + CUTLINES)
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 4: MÓDULO DTF NORMAL -->
+    <section class="section" id="normal">
+        <h2 class="section-title">
+            <span class="number">4</span>
+            Módulo DTF Normal (En Rollo)
+        </h2>
+
+        <p style="margin-bottom: 25px;">
+            Impresión estándar sin efectos 3D. El cliente puede mezclar varios diseños 
+            y recibirlo en rollo por metros.
+        </p>
+
+        <!-- MÚLTIPLES DISEÑOS -->
+        <div class="func-card">
+            <h3>📁 Subir Múltiples Diseños</h3>
+            <p>
+                El cliente puede subir <strong>varios diseños diferentes</strong> y mezclarlos 
+                en el mismo rollo.
+            </p>
+
+            <ul class="feature-list">
+                <li>Subir varios archivos al principio</li>
+                <li>O ir añadiendo uno a uno</li>
+                <li>Elegir cantidad de cada diseño</li>
+            </ul>
+
+            <div class="info-box danger">
+                <div class="info-box-title">🔴 Sin Efectos</div>
+                <p>
+                    En modo rollo <strong>NO hay efectos</strong> (ni texturas, ni blancos, ni barniz). 
+                    Es solo impresión directa tal cual.
+                </p>
+            </div>
+        </div>
+
+        <!-- CANTIDAD Y ORGANIZACIÓN -->
+        <div class="func-card">
+            <h3>🔢 Elegir Cantidades</h3>
+            <p>
+                El cliente indica cuántas unidades quiere de cada diseño. 
+                El programa los organiza en el rollo.
+            </p>
+
+            <div class="diagram">
+                <div class="diagram-title">Ejemplo: Múltiples Diseños en Rollo</div>
+<pre>
+    El cliente sube:          Elige cantidades:        Resultado en rollo:
+    
+    Logo A                    A: 20 unidades           ┌─────────────────────────
+    Logo B                    B: 15 unidades           │ A A B A C A B A A B C A
+    Logo C                    C: 10 unidades           │ B A A C B A A B C A A B
+                                                       │ A C A B A A C B A B A ...
+                                                       └─────────────────────────
+                              Total: X metros          
+</pre>
+            </div>
+        </div>
+
+        <!-- ROTACIÓN -->
+        <div class="func-card">
+            <h3>🔄 Rotación de Logos</h3>
+            <p>
+                Para aprovechar mejor el espacio del rollo.
+            </p>
+
+            <ul class="feature-list">
+                <li><strong>Automática:</strong> Botón "Optimizar" que rota para que quepan más</li>
+                <li><strong>Manual:</strong> El cliente puede rotar cada logo individualmente</li>
+                <li><strong>Misma orientación:</strong> Todos los logos mantienen la misma orientación</li>
+            </ul>
+        </div>
+
+        <!-- SALIDA NORMAL -->
+        <div class="func-card">
+            <h3>
+                💾 Archivos de Salida (Normal)
+            </h3>
+            
+            <p><strong>Formato de salida:</strong></p>
+            <div style="background: var(--secondary); color: white; padding: 15px 25px; border-radius: 8px; text-align: center; display: inline-block; margin: 15px 0;">
+                <strong>PNG</strong>
+            </div>
+
+            <p style="margin-top: 15px;">
+                El cliente puede descargar:
+            </p>
+            <ul class="feature-list">
+                <li>Un PNG por cada diseño diferente</li>
+                <li>O todos juntos organizados</li>
+            </ul>
+
+            <div class="info-box">
+                <div class="info-box-title">📋 Sin DXF</div>
+                <p>En modo rollo <strong>NO se genera DXF</strong> ni marcas OPOS. Solo archivo de impresión.</p>
+            </div>
+
+            <p><strong>Tamaños por metro:</strong> <span class="pending">A DEFINIR</span></p>
+        </div>
+    </section>
+
+    <!-- SECTION 5: GESTIÓN TEXTURAS BACKEND -->
+    <section class="section" id="texturas">
+        <h2 class="section-title">
+            <span class="number">5</span>
+            Gestión de Texturas (Backend)
+            <span class="admin-tag">SOLO ADMIN</span>
+        </h2>
+
+        <div class="func-card critical">
+            <h3>
+                ⚙️ Administrar Texturas
+                <span class="tag critical">CRÍTICO</span>
+            </h3>
+            <p>
+                El administrador (FORTE PRINTERS GROUP) debe poder gestionar las texturas 
+                desde un panel de administración. Los clientes verán las texturas disponibles.
+            </p>
+
+            <div class="info-box success">
+                <div class="info-box-title">✅ Funcionalidades del Admin</div>
+                <ul class="feature-list">
+                    <li><strong>SUBIR</strong> texturas nuevas (PNG en negro puro)</li>
+                    <li><strong>NOMBRAR</strong> cada textura</li>
+                    <li><strong>ORGANIZAR</strong> en categorías</li>
+                    <li><strong>PREVISUALIZAR</strong> cómo se ve</li>
+                    <li><strong>ACTIVAR / DESACTIVAR</strong> sin eliminar</li>
+                    <li><strong>ELIMINAR</strong> texturas</li>
+                    <li><strong>ORDENAR</strong> el orden de aparición</li>
+                </ul>
+            </div>
+
+            <div class="info-box warning">
+                <div class="info-box-title">⚠️ Sincronización</div>
+                <p>
+                    Cuando el admin suba una textura nueva, los clientes deben verla 
+                    automáticamente la próxima vez que usen el software.
+                </p>
+            </div>
+
+            <div class="diagram">
+                <div class="diagram-title">Ejemplo: Panel Admin de Texturas</div>
+<pre>
+    ┌─────────────────────────────────────────────────────────────────┐
+    │  BACKEND - Gestión de Texturas                    [+ SUBIR]    │
+    ├─────────────────────────────────────────────────────────────────┤
+    │                                                                 │
+    │  CATEGORÍA: Geométricas                           [+ Añadir]   │
+    │  ┌──────────┬──────────┬──────────┬──────────┐                 │
+    │  │ ● ● ● ●  │ ─ ─ ─ ─  │ ■ ■ ■ ■  │ ◆ ◆ ◆ ◆  │                 │
+    │  │ ● ● ● ●  │ ─ ─ ─ ─  │ ■ ■ ■ ■  │ ◆ ◆ ◆ ◆  │                 │
+    │  ├──────────┼──────────┼──────────┼──────────┤                 │
+    │  │ Puntos   │ Líneas   │ Cuadros  │ Rombos   │                 │
+    │  │ [✓] Act  │ [✓] Act  │ [ ] Des  │ [✓] Act  │                 │
+    │  │ [Editar] │ [Editar] │ [Editar] │ [Editar] │                 │
+    │  └──────────┴──────────┴──────────┴──────────┘                 │
+    │                                                                 │
+    └─────────────────────────────────────────────────────────────────┘
+</pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 6: CONFIGURACIÓN BACKEND -->
+    <section class="section" id="backend">
+        <h2 class="section-title">
+            <span class="number">6</span>
+            Configuración Backend
+            <span class="admin-tag">SOLO ADMIN</span>
+        </h2>
+
+        <p style="margin-bottom: 25px;">
+            Parámetros que configura el administrador, NO el cliente.
+        </p>
+
+        <div class="func-card">
+            <h3>📏 Separación entre Logos (Corte)</h3>
+            <p>
+                La distancia entre logo y logo para cortar la decide el <strong>ADMIN</strong>, 
+                no el cliente.
+            </p>
+            <p><strong>Valor:</strong> <span class="pending">A DEFINIR</span></p>
+        </div>
+
+        <div class="func-card">
+            <h3>⭕ Márgenes OPOS</h3>
+            <p>
+                Los márgenes donde van las marcas OPOS los configura el <strong>ADMIN</strong> 
+                desde el backend.
+            </p>
+            <p><strong>Valor:</strong> <span class="pending">A DEFINIR</span></p>
+        </div>
+
+        <div class="func-card">
+            <h3>📄 Tamaños de Hoja Predefinidos</h3>
+            <p>
+                Los tamaños de hoja disponibles para el cliente los define el <strong>ADMIN</strong>.
+            </p>
+            <p><strong>Tamaños:</strong> <span class="pending">A DEFINIR</span></p>
+        </div>
+
+        <div class="func-card">
+            <h3>📏 Tamaños por Metro (Rollo)</h3>
+            <p>
+                Los anchos de rollo disponibles los define el <strong>ADMIN</strong>.
+            </p>
+            <p><strong>Tamaños:</strong> <span class="pending">A DEFINIR</span></p>
+        </div>
+    </section>
+
+    <!-- SECTION 7: GENERACIÓN DXF -->
+    <section class="section" id="dxf">
+        <h2 class="section-title">
+            <span class="number">7</span>
+            Generación de Archivo DXF
+        </h2>
+
+        <div class="info-box warning">
+            <div class="info-box-title">⚠️ Solo en DTF 3D (Corte)</div>
+            <p>El archivo DXF solo se genera en el módulo 3D. En DTF Normal (rollo) no hay DXF.</p>
+        </div>
+
+        <div class="func-card critical">
+            <h3>
+                📄 Estructura del DXF
+                <span class="tag critical">CRÍTICO</span>
+            </h3>
+            <p>El archivo DXF tiene <strong>2 capas obligatorias</strong>:</p>
+
+            <div class="comparison">
+                <div class="comparison-box" style="border-top: 4px solid var(--primary);">
+                    <h4 style="color: var(--primary);">CAPA: CUTMARKS (Arriba)</h4>
+                    <p>Marcas OPOS para que la cortadora se alinee.</p>
+                    <ul>
+                        <li>Círculos de <strong>0.6 cm</strong> de diámetro</li>
+                        <li>Relleno <strong>negro sólido</strong></li>
+                        <li>Cada <strong>20 cm</strong> en el perímetro</li>
+                        <li>Mínimo 3 marcas</li>
+                    </ul>
+                </div>
+
+                <div class="comparison-box" style="border-top: 4px solid var(--secondary);">
+                    <h4 style="color: var(--secondary);">CAPA: CUTLINES (Abajo)</h4>
+                    <p>Líneas por donde pasa la cuchilla.</p>
+                    <ul>
+                        <li>Perfiles de corte de cada logo</li>
+                        <li>Grosor: <strong>0.5 pt</strong></li>
+                        <li>Color: <strong>Magenta</strong></li>
+                        <li>Precisión: <strong>0.1 mm</strong></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="diagram">
+                <div class="diagram-title">Ejemplo Visual del DXF</div>
+<pre>
+    ●───────●───────●───────●───────●   ← CUTMARKS (OPOS)
+    │                               │
+    │   ╭───╮   ╭───╮   ╭───╮      │
+    ●   │   │   │   │   │   │      ●   ← CUTMARKS
+    │   ╰───╯   ╰───╯   ╰───╯      │
+    │   ╭───╮   ╭───╮   ╭───╮      │      CUTLINES (perfiles)
+    ●   │   │   │   │   │   │      ●
+    │   ╰───╯   ╰───╯   ╰───╯      │
+    │                               │
+    ●───────●───────●───────●───────●   ← CUTMARKS
+    
+    ● = OPOS     ╭───╮ = Perfil de corte
+</pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 8: DESCARGA DE ARCHIVOS -->
+    <section class="section" id="exportacion">
+        <h2 class="section-title">
+            <span class="number">8</span>
+            Descarga de Archivos
+        </h2>
+
+        <div class="func-card">
+            <h3>💾 Generar y Descargar</h3>
+            <p>
+                El cliente hace clic en "GENERAR" y descarga los archivos listos.
+            </p>
+
+            <div class="comparison">
+                <div class="comparison-box mode-3d">
+                    <h4>🎨 DTF 3D descarga:</h4>
+                    <ul>
+                        <li>PDF, PSD o TIFF (elige)</li>
+                        <li>DXF (siempre)</li>
+                    </ul>
+                    <p style="margin-top: 15px; font-size: 0.9rem; color: var(--gray);">
+                        Resolución: 300 DPI<br>
+                        Fondo: Transparente<br>
+                        Canales spot: Incluidos
+                    </p>
+                </div>
+
+                <div class="comparison-box mode-normal">
+                    <h4>📏 DTF Normal descarga:</h4>
+                    <ul>
+                        <li>PNG (uno o varios)</li>
+                        <li class="no">Sin DXF</li>
+                    </ul>
+                    <p style="margin-top: 15px; font-size: 0.9rem; color: var(--gray);">
+                        Resolución: 300 DPI<br>
+                        Fondo: Transparente
+                    </p>
+                </div>
+            </div>
+
+            <div class="diagram">
+                <div class="diagram-title">Nombres de Archivos</div>
+<pre>
+    DTF 3D:
+    [nombre]_PRINT_[ancho]x[alto]_300dpi.pdf  (o .psd o .tiff)
+    [nombre]_CUT_[ancho]x[alto].dxf
+    
+    DTF Normal:
+    [nombre]_PRINT_[ancho]x[alto]_300dpi.png
+</pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 9: GUARDAR PROYECTOS -->
+    <section class="section" id="proyectos">
+        <h2 class="section-title">
+            <span class="number">9</span>
+            Guardar Proyectos
+        </h2>
+
+        <div class="func-card">
+            <h3>💾 El Cliente Puede Guardar su Trabajo</h3>
+            <p>
+                El cliente puede guardar su proyecto y <strong>volver otro día</strong> a continuar. 
+                Todos sus proyectos quedan guardados en su cuenta.
+            </p>
+
+            <ul class="feature-list">
+                <li><strong>Guardar proyecto</strong> con un nombre</li>
+                <li><strong>Ver lista</strong> de proyectos guardados</li>
+                <li><strong>Abrir</strong> un proyecto anterior</li>
+                <li><strong>Continuar</strong> donde lo dejó</li>
+                <li><strong>Eliminar</strong> proyectos que ya no necesita</li>
+            </ul>
+
+            <div class="diagram">
+                <div class="diagram-title">Ejemplo: Mis Proyectos</div>
+<pre>
+    ┌─────────────────────────────────────────────────────────────┐
+    │  MIS PROYECTOS                              [+ Nuevo]       │
+    ├─────────────────────────────────────────────────────────────┤
+    │                                                             │
+    │  📁 Escudo_FCB_3D          │ 3D │ Hace 2 días    [Abrir]   │
+    │  📁 Logos_Navidad          │ 🔄 │ Hace 1 semana  [Abrir]   │
+    │  📁 Parches_Empresa        │ 3D │ Hace 2 semanas [Abrir]   │
+    │                                                             │
+    └─────────────────────────────────────────────────────────────┘
+</pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 10: SISTEMA DE LICENCIAS -->
+    <section class="section" id="licencias">
+        <h2 class="section-title">
+            <span class="number">10</span>
+            Sistema de Licencias
+        </h2>
+
+        <div class="func-card critical">
+            <h3>
+                🔐 Protección Anti-Piratería
+                <span class="tag critical">CRÍTICO</span>
+            </h3>
+            <p>
+                El software debe estar protegido. Cada usuario necesita una licencia válida.
+            </p>
+
+            <ul class="feature-list">
+                <li><strong>Activación con código único</strong></li>
+                <li><strong>Verificación online</strong> con el servidor</li>
+                <li><strong>Validación periódica</strong> cada 7 días</li>
+                <li><strong>Límite de ordenadores</strong> por licencia</li>
+                <li><strong>Integración con Stripe</strong> para suscripciones</li>
+            </ul>
+
+            <div class="info-box danger">
+                <div class="info-box-title">🔴 Muy Importante</div>
+                <p>
+                    El sistema debe ser <strong>robusto y seguro</strong>. 
+                    No debe poder crackearse fácilmente.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 11: PROPUESTA UI/UX -->
+    <section class="section" id="ui">
+        <h2 class="section-title">
+            <span class="number">11</span>
+            Propuesta UI/UX
+        </h2>
+
+        <p style="margin-bottom: 25px;">
+            Propuesta visual de cómo podría verse el software. El <strong>módulo 3D</strong> debe ser 
+            visualmente el protagonista.
+        </p>
+
+        <div class="ui-mockup">
+            <div class="ui-titlebar">
+                <div class="ui-dot red"></div>
+                <div class="ui-dot yellow"></div>
+                <div class="ui-dot green"></div>
+                <span>DTF EUROPE TECH</span>
+            </div>
+            <div class="ui-content">
+                <!-- SIDEBAR -->
+                <div class="ui-sidebar">
+                    <h5>MODO</h5>
+                    <div class="ui-menu-item active">🎨 DTF 3D</div>
+                    <div class="ui-menu-item">📏 DTF Normal</div>
+
+                    <h5>PASOS</h5>
+                    <div class="ui-menu-item completed">✓ Subir diseño</div>
+                    <div class="ui-menu-item completed">✓ Ajustar tamaño</div>
+                    <div class="ui-menu-item active">3. Aplicar efectos</div>
+                    <div class="ui-menu-item">4. Imposición</div>
+                    <div class="ui-menu-item">5. Descargar</div>
+
+                    <h5>HERRAMIENTAS</h5>
+                    <div class="ui-menu-item">🪄 Varita Mágica</div>
+                    <div class="ui-menu-item">⬜ Rectángulo</div>
+                    <div class="ui-menu-item">✏️ Lazo</div>
+                </div>
+
+                <!-- CANVAS -->
+                <div class="ui-canvas">
+                    <div class="ui-canvas-placeholder">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">🖼️</div>
+                        Vista previa en tiempo real<br><br>
+                        El cliente ve los cambios<br>
+                        inmediatamente
+                    </div>
+                </div>
+
+                <!-- PANEL -->
+                <div class="ui-panel">
+                    <div class="ui-info-bar">
+                        📐 300 DPI · 15 × 12 cm · ✓ Calidad óptima
+                    </div>
+
+                    <div class="ui-panel-section">
+                        <div class="ui-panel-title">📐 Tamaño</div>
+                        <div class="ui-input-group">
+                            <label class="ui-label">Ancho (cm)</label>
+                            <input type="number" class="ui-input" value="15">
+                        </div>
+                        <div class="ui-input-group">
+                            <label class="ui-label">Alto (cm)</label>
+                            <input type="number" class="ui-input" value="12">
+                        </div>
+                        <div class="ui-checkbox">
+                            <input type="checkbox" checked> Mantener proporción
+                        </div>
+                    </div>
+
+                    <div class="ui-panel-section">
+                        <div class="ui-panel-title">🎭 Fondo</div>
+                        <button class="ui-button" style="background: #444;">Eliminar fondo</button>
+                    </div>
+
+                    <div class="ui-panel-section">
+                        <div class="ui-panel-title">🎨 Canal Spot</div>
+                        <div class="ui-input-group">
+                            <label class="ui-label">Textura</label>
+                            <select class="ui-select">
+                                <option>Seleccionar textura...</option>
+                                <option>Puntos Pequeños</option>
+                                <option>Líneas Horizontales</option>
+                            </select>
+                        </div>
+                        <button class="ui-button">+ Aplicar Textura</button>
+                    </div>
+
+                    <div class="ui-panel-section">
+                        <div class="ui-panel-title">🤍 Capas de Blanco</div>
+                        <div class="ui-checkbox">
+                            <input type="checkbox" checked disabled> Blanco Base
+                        </div>
+                        <button class="ui-button" style="background: #444;">+ Añadir Capa</button>
+                    </div>
+
+                    <div class="ui-panel-section">
+                        <div class="ui-panel-title">✨ Barniz</div>
+                        <select class="ui-select">
+                            <option>Sin barniz</option>
+                            <option>Sólido</option>
+                            <option>Degradado</option>
+                        </select>
+                    </div>
+
+                    <button class="ui-button secondary">SIGUIENTE →</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <div class="info-box-title">💡 Notas sobre la Interfaz</div>
+            <ul class="feature-list">
+                <li>El <strong>modo 3D</strong> es el protagonista (activo por defecto)</li>
+                <li>Barra superior muestra <strong>DPI y tamaño</strong> siempre visible</li>
+                <li>Vista previa <strong>en tiempo real</strong></li>
+                <li>Flujo paso a paso claro</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- SECTION 12: ROADMAP -->
+    <section class="section" id="roadmap">
+        <h2 class="section-title">
+            <span class="number">12</span>
+            Próximas Versiones
+        </h2>
+
+        <p style="margin-bottom: 25px;">
+            Funcionalidades planificadas para futuras versiones del software.
+        </p>
+
+        <div class="roadmap">
+            <div class="roadmap-item">
+                <div class="version">v2.x</div>
+                <h4>Tramas de Semitonos</h4>
+                <p>Efectos de tramado profesional</p>
+            </div>
+
+            <div class="roadmap-item">
+                <div class="version">v2.x</div>
+                <h4>Quitar Marcas de Agua</h4>
+                <p>Eliminar watermarks de imágenes</p>
+            </div>
+
+            <div class="roadmap-item">
+                <div class="version">v2.x</div>
+                <h4>Integración WooCommerce</h4>
+                <p>Compra directa desde el software</p>
+            </div>
+
+            <div class="roadmap-item">
+                <div class="version">Futuro</div>
+                <h4>Y mucho más...</h4>
+                <p>Nuevas funcionalidades</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- RESUMEN FINAL -->
+    <section class="section" style="background: var(--dark); color: white;">
+        <h2 style="font-size: 1.5rem; margin-bottom: 25px; color: white;">📋 Resumen de Funcionalidades Fase 1</h2>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+            <div>
+                <h4 style="color: var(--accent-light); margin-bottom: 15px;">COMUNES (Ambos modos)</h4>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Cargar archivos (PDF, TIFF, PNG)</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Validación calidad (mín 150 DPI)</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Mostrar DPI + tamaño en cm</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Escalar/redimensionar ⭐</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Eliminar fondo ⭐</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Vista previa en tiempo real</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Guardar proyectos</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Términos y condiciones (LOG)</li>
+                    <li style="padding: 8px 0;">✓ Sistema de licencias</li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 style="color: var(--gold); margin-bottom: 15px;">🌟 DTF 3D (Corte)</h4>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Herramientas selección</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Canales spot con texturas</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Capas de blanco</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Barniz (sólido/degradado)</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Detección forma automática</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Fondo tipo sticker</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Imposición (1 modelo)</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Opciones de corte</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Generación DXF</li>
+                    <li style="padding: 8px 0;">✓ Salida: PDF/PSD/TIFF + DXF</li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 style="color: var(--secondary); margin-bottom: 15px;">📏 DTF Normal (Rollo)</h4>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Múltiples diseños</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Elegir cantidades</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Rotación (auto + manual)</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Organización en rollo</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Por metros</li>
+                    <li style="padding: 8px 0;">✓ Salida: PNG(s)</li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 style="color: var(--warning); margin-bottom: 15px;">⚙️ Backend (Admin)</h4>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Gestión texturas</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Separación entre logos</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">✓ Márgenes OPOS</li>
+                    <li style="padding: 8px 0;">✓ Tamaños hoja predefinidos</li>
+                </ul>
+            </div>
+        </div>
+
+        <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 0.9rem; opacity: 0.7;">
+            ⭐ = Funcionalidades añadidas (no contempladas en presupuesto original)
+        </p>
+    </section>
+
+    <!-- FOOTER -->
+    <footer style="text-align: center; padding: 40px 20px; color: var(--gray);">
+        <p><strong>DTF EUROPE TECH</strong> - Documento Definitivo de Funcionalidades Fase 1</p>
+        <p style="font-size: 0.9rem; margin-top: 10px;">FORTE PRINTERS GROUP SLU - Noviembre 2025</p>
+    </footer>
+
+</div>
+
+</body>
+</html>

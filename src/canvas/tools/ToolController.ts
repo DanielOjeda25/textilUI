@@ -1,8 +1,8 @@
 import type { ToolType, Tool } from './tool.types'
 import { ViewportController } from '../viewport/ViewportController'
 import { useToolStore } from '../../state/useToolStore'
-import { SelectionTool } from './SelectionTool'
-import { MoveTool } from './MoveTool'
+// import { SelectionTool } from './SelectionTool'
+// import { MoveTool } from './MoveTool'
 import { TransformTool } from './TransformTool'
 
 class EmptyTool implements Tool {
@@ -20,8 +20,8 @@ export class ToolController {
   constructor(viewport: ViewportController) {
     this.viewport = viewport
     this.registry = new Map<ToolType, () => Tool>([
-      ['select', () => new SelectionTool(this.viewport)],
-      ['move', () => new MoveTool(this.viewport)],
+      ['select', () => new TransformTool(this.viewport)],
+      ['move', () => new TransformTool(this.viewport)],
       ['transform', () => new TransformTool(this.viewport)],
       ['crop', () => new EmptyTool('crop')],
       ['eraser', () => new EmptyTool('eraser')],
@@ -29,7 +29,7 @@ export class ToolController {
       ['color', () => new EmptyTool('color')],
       ['text', () => new EmptyTool('text')],
     ])
-    this.active = this.registry.get(useToolStore.getState().activeTool)?.() ?? new SelectionTool(this.viewport)
+    this.active = this.registry.get(useToolStore.getState().activeTool)?.() ?? new TransformTool(this.viewport)
   }
   private ensureActive() {
     const id = useToolStore.getState().activeTool
@@ -49,5 +49,9 @@ export class ToolController {
   onPointerUp(e: PointerEvent) {
     this.ensureActive()
     this.active.onPointerUp?.(e)
+  }
+  cancel() {
+    this.ensureActive()
+    this.active.onCancel?.()
   }
 }

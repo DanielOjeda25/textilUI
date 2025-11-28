@@ -11,6 +11,10 @@ export function useCanvasInteraction(controller: ViewportController) {
   const last = useRef({ x: 0, y: 0 })
   const [spaceDown, setSpaceDown] = useState(false)
   const tools = useMemo(() => new ToolController(controller), [controller])
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const rectRef = useRef<DOMRect | null>(null)
+  const rafPending = useRef(false)
+  const lastMoveEvent = useRef<PointerEvent | null>(null)
 
   useEffect(() => {
     const view = document.querySelector('canvas') as HTMLCanvasElement | null
@@ -67,7 +71,8 @@ export function useCanvasInteraction(controller: ViewportController) {
       last.current = { x: e.clientX, y: e.clientY }
       return
     }
-    const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
+    const canvas = (canvasRef.current ||= (document.querySelector('canvas') as HTMLCanvasElement | null))
+    rectRef.current = canvas?.getBoundingClientRect() ?? null
     if (canvas && typeof e.pointerId === 'number') {
       // Captura el puntero para mantener los eventos durante el drag aunque salga del canvas
       try { canvas.setPointerCapture(e.pointerId) } catch { void 0 }
@@ -82,32 +87,42 @@ export function useCanvasInteraction(controller: ViewportController) {
       controller.panBy(dx, dy)
       return
     }
-    // Feedback de cursor según handle bajo el puntero
-    const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
-    if (canvas) {
-      const rect = canvas.getBoundingClientRect()
-      const sx = e.clientX - rect.left
-      const sy = e.clientY - rect.top
-      const p = controller.screenToWorld(sx, sy)
-      const { viewport, layers, selectedLayerId } = useCanvasStore.getState()
-      const layer = layers.find((l) => l.id === selectedLayerId)
-      if (layer) {
-        const h = detectHandle(p, layer, viewport.scale, HANDLE_HIT_RADIUS_SCREEN)
-        let cursor: string = 'default'
-        if (h.kind === 'rotate') {
-          cursor = (e.buttons & 1) ? 'grabbing' : 'grab'
-        } else if (h.kind === 'corner') {
-          cursor = 'nwse-resize'
-        } else if (h.kind === 'side') {
-          // Índices: 0=lado superior, 1=derecho, 2=inferior, 3=izquierdo
-          cursor = h.index === 0 || h.index === 2 ? 'ns-resize' : 'ew-resize'
+    lastMoveEvent.current = e
+    if (!rafPending.current) {
+      rafPending.current = true
+      requestAnimationFrame(() => {
+        const evt = lastMoveEvent.current
+        rafPending.current = false
+        if (!evt) return
+        // Feedback de cursor según handle bajo el puntero
+        const canvas = (canvasRef.current ||= (document.querySelector('canvas') as HTMLCanvasElement | null))
+        const rect = (rectRef.current ||= canvas?.getBoundingClientRect() ?? null)
+        if (canvas && rect) {
+          const sx = evt.clientX - rect.left
+          const sy = evt.clientY - rect.top
+          const p = controller.screenToWorld(sx, sy)
+          const { viewport, layers, selectedLayerId } = useCanvasStore.getState()
+          const layer = layers.find((l) => l.id === selectedLayerId)
+          if (layer) {
+            const h = detectHandle(p, layer, viewport.scale, HANDLE_HIT_RADIUS_SCREEN)
+            let cursor: string = 'default'
+            if (h.kind === 'rotate') {
+              cursor = (evt.buttons & 1) ? 'grabbing' : 'grab'
+            } else if (h.kind === 'corner') {
+              cursor = 'nwse-resize'
+            } else if (h.kind === 'side') {
+              cursor = h.index === 0 || h.index === 2 ? 'ns-resize' : 'ew-resize'
+            } else {
+              cursor = 'move'
+            }
+            canvas.style.cursor = cursor
+          } else {
+            canvas.style.cursor = 'default'
+          }
         }
-        canvas.style.cursor = cursor
-      } else {
-        canvas.style.cursor = 'default'
-      }
+        tools.onPointerMove(evt)
+      })
     }
-    tools.onPointerMove(e)
   }
   function onPointerUp(e: PointerEvent) {
     if (dragging.current) dragging.current = false
@@ -118,6 +133,11 @@ export function useCanvasInteraction(controller: ViewportController) {
     }
     tools.onPointerUp(e)
   }
+  useEffect(() => {
+    const onKey = (ev: KeyboardEvent) => { if (ev.key === 'Escape') tools.cancel() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [tools])
 
   return { reset, handlers: { onPointerDown, onPointerMove, onPointerUp } }
 }

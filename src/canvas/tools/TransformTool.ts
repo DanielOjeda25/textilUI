@@ -2,24 +2,26 @@ import { useCanvasStore } from '../../state/useCanvasStore'
 import type { Tool } from './tool.types'
 import { ViewportController } from '../viewport/ViewportController'
 import type { AnyLayer } from '../layers/layer.types'
-import { detectHandle, anchorForHandle, getBounds, rotate, HANDLE_HIT_RADIUS_SCREEN } from './handle.utils'
+import { detectHandle, anchorForHandle, getBounds, rotate, HANDLE_HIT_RADIUS_SCREEN, isWithinLayer } from './handle.utils'
 import type { HandleKind } from './handle.utils'
 import { snapAngle, snapPoint } from '../snapping/snapping'
 import { useHistoryStore } from '../../state/useHistoryStore'
 import { UpdateLayerCommand, RotateCommand } from '../../history/commands'
 const ROTATE_SENSITIVITY = 0.7
-const SCALE_SENSITIVITY = 0.1
+const SCALE_SENSITIVITY = 0.2
 
-type Mode = 'none' | 'scale' | 'rotate'
+type Mode = 'none' | 'scale' | 'rotate' | 'move'
 
 export class TransformTool implements Tool {
   type = 'transform' as const
   private mode: Mode = 'none'
-  private origin = { x: 0, y: 0 }
   private startHandle: { kind: HandleKind; index?: number } = { kind: null }
   private startScale = 1
   private startRotation = 0
   private startAngle = 0
+  private startX = 0
+  private startY = 0
+  private moveStart = { x: 0, y: 0 }
   private anchor = { x: 0, y: 0 }
   private shift = false
   private alt = false
@@ -35,13 +37,28 @@ export class TransformTool implements Tool {
   }
 
   onPointerDown(e: PointerEvent) {
-    const layer = this.getSelected()
-    if (!layer) return
+    let layer = this.getSelected()
     const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
     const rect = canvas?.getBoundingClientRect()
     const sx = e.clientX - (rect?.left ?? 0)
     const sy = e.clientY - (rect?.top ?? 0)
     const p = this.viewport.screenToWorld(sx, sy)
+    if (!layer) {
+      const ls = useCanvasStore.getState().layers
+      for (let i = ls.length - 1; i >= 0; i--) {
+        const l = ls[i]
+        if (!l.visible || l.locked) continue
+        if (isWithinLayer(p, l)) { layer = l; useCanvasStore.getState().selectLayer(l.id); break }
+      }
+      if (!layer) return
+    } else {
+      const ls = useCanvasStore.getState().layers
+      for (let i = ls.length - 1; i >= 0; i--) {
+        const l = ls[i]
+        if (!l.visible || l.locked) continue
+        if (isWithinLayer(p, l) && l.id !== layer.id) { layer = l; useCanvasStore.getState().selectLayer(l.id); break }
+      }
+    }
     const vp = useCanvasStore.getState().viewport
     // Usar radio de detección configurable en píxeles de pantalla
     this.startHandle = detectHandle(p, layer, vp.scale, HANDLE_HIT_RADIUS_SCREEN)
@@ -50,10 +67,10 @@ export class TransformTool implements Tool {
     this.ctrl = e.ctrlKey || e.metaKey
     this.startScale = layer.scale
     this.startRotation = layer.rotation
+    this.startX = layer.x
+    this.startY = layer.y
     if (this.startHandle.kind === 'rotate') {
       this.mode = 'rotate'
-      // Origin simplificado: centro de la capa en mundo
-      this.origin = { x: layer.x, y: layer.y }
       this.startAngle = Math.atan2(p.y - layer.y, p.x - layer.x)
       return
     }
@@ -61,6 +78,12 @@ export class TransformTool implements Tool {
       const anch = this.alt ? { x: layer.x + rotate({ x: (getBounds(layer).width * layer.scale) / 2, y: (getBounds(layer).height * layer.scale) / 2 }, layer.rotation).x - rotate({ x: (getBounds(layer).width * layer.scale) / 2, y: (getBounds(layer).height * layer.scale) / 2 }, layer.rotation).x, y: layer.y } : anchorForHandle(this.startHandle.kind, this.startHandle.index, layer)
       this.anchor = anch
       this.mode = 'scale'
+      return
+    }
+    // Mover por arrastre directo dentro del bounding box
+    if (isWithinLayer(p, layer)) {
+      this.mode = 'move'
+      this.moveStart = { x: p.x, y: p.y }
       return
     }
   }
@@ -80,6 +103,24 @@ export class TransformTool implements Tool {
       let rot = this.startRotation + delta * ROTATE_SENSITIVITY
       if (this.ctrl) rot = snapAngle(rot, 15)
       useHistoryStore.getState().preview(new RotateCommand(id, layer.rotation, rot))
+      const updated = useCanvasStore.getState().layers.find((l) => l.id === id)
+      if (updated) {
+        const b2 = getBounds(updated)
+        const vp2 = useCanvasStore.getState().viewport
+        const clamped2 = clampToViewport(updated.x, updated.y, updated.scale, rot, b2, vp2)
+        useHistoryStore.getState().preview(new UpdateLayerCommand(id, { x: clamped2.x, y: clamped2.y }))
+      }
+      return
+    }
+    if (this.mode === 'move') {
+      const dx = p.x - this.moveStart.x
+      const dy = p.y - this.moveStart.y
+      const next = { x: this.startX + dx, y: this.startY + dy }
+      const vp = useCanvasStore.getState().viewport
+      const snapped = snapPoint(next.x, next.y, vp, 8)
+      const b = getBounds(layer)
+      const clamped = clampToViewport(snapped.x, snapped.y, layer.scale, layer.rotation, b, vp)
+      useHistoryStore.getState().preview(new UpdateLayerCommand(id, { x: clamped.x, y: clamped.y }))
       return
     }
     if (this.mode === 'scale') {
@@ -112,6 +153,7 @@ export class TransformTool implements Tool {
   }
 
   onPointerUp() {
+    const mode = this.mode
     this.mode = 'none'
     const layer = this.getSelected()
     if (!layer) return
@@ -123,12 +165,31 @@ export class TransformTool implements Tool {
     if (!current) return
     if (this.startHandle.kind === 'rotate') {
       useHistoryStore.getState().execute(new RotateCommand(id, this.startRotation, current.rotation))
+      const b = getBounds(current)
+      const vp = useCanvasStore.getState().viewport
+      const clamped = clampToViewport(current.x, current.y, current.scale, current.rotation, b, vp)
+      if (clamped.x !== current.x || clamped.y !== current.y) {
+        useHistoryStore.getState().execute(new UpdateLayerCommand(id, { x: clamped.x, y: clamped.y }))
+      }
+    } else if (mode === 'move') {
+      const b = getBounds(layer)
+      const vp = useCanvasStore.getState().viewport
+      const clamped = clampToViewport(layer.x, layer.y, layer.scale, layer.rotation, b, vp)
+      useHistoryStore.getState().execute(new UpdateLayerCommand(id, { x: clamped.x, y: clamped.y }))
     } else if (this.startHandle.kind === 'corner' || this.startHandle.kind === 'side') {
       const b = getBounds(current)
       const vp = useCanvasStore.getState().viewport
       const clamped = clampToViewport(current.x, current.y, current.scale, current.rotation, b, vp)
       useHistoryStore.getState().execute(new UpdateLayerCommand(id, { scale: current.scale, x: clamped.x, y: clamped.y }))
     }
+  }
+
+  onCancel() {
+    const layer = this.getSelected()
+    if (!layer) return
+    const id = layer.id
+    useHistoryStore.getState().preview(new UpdateLayerCommand(id, { x: this.startX, y: this.startY, scale: this.startScale, rotation: this.startRotation }))
+    this.mode = 'none'
   }
 }
 

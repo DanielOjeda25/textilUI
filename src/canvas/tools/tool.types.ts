@@ -5,6 +5,7 @@ export interface Tool {
   onPointerDown?(e: PointerEvent, hit: boolean): void
   onPointerMove?(e: PointerEvent): void
   onPointerUp?(e: PointerEvent): void
+  onCancel?(): void
   activate?(): void
   deactivate?(): void
 }

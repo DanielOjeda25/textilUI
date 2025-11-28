@@ -28,9 +28,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Mejor performance: separar módulos grandes
-          pixi: ["pixi.js", "@pixi/react"],
           wasm: ["onnxruntime-web", "@imagemagick/magick-wasm"],
+          konva: ["konva", "react-konva"],
         },
       },
     },

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useToolStore } from '../../state/useToolStore'
-import { useCanvasStore } from '../../state/useCanvasStore'
+// import { useCanvasStore } from '../../state/useCanvasStore'
 
 type ToolId =
   | 'select'
@@ -40,14 +40,7 @@ export default function Toolbar({ onOpenText }: Props) {
     (s) => s.setActiveTool as (t: ToolId) => void,
   )
 
-  function setActive(tool: ToolId) {
-    try {
-      setActiveToolStore(tool)
-    } catch {
-      // fallback
-      useCanvasStore.getState().setActiveTool(tool)
-    }
-  }
+  function setActive(tool: ToolId) { setActiveToolStore(tool) }
 
   function btnProps(tool: ToolId) {
     return { active: active === tool, onClick: () => setActive(tool) }
