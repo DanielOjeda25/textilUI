@@ -2,6 +2,7 @@ import { useCanvasStore } from '../src/state/useCanvasStore'
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 
+import type { RasterLayer } from '../src/canvas/layers/layer.types'
 type DiffEntry = { id: string; ok: boolean; differences?: string[] }
 
 function computeDiffs(): DiffEntry[] {
@@ -22,10 +23,11 @@ function computeDiffs(): DiffEntry[] {
     if (l.y !== baseY) out.push('y')
     if (l.rotation !== baseRot) out.push('rotation')
     if (l.type === 'raster') {
-      const rw = (l as any).originalWidth ?? (l as any).width
-      const rh = (l as any).originalHeight ?? (l as any).height
-      if ((l as any).width !== rw) out.push('width')
-      if ((l as any).height !== rh) out.push('height')
+      const rl = l as RasterLayer
+      const rw = rl.originalWidth ?? rl.width
+      const rh = rl.originalHeight ?? rl.height
+      if (rl.width !== rw) out.push('width')
+      if (rl.height !== rh) out.push('height')
       if (l.scale !== 1) out.push('scale')
     } else {
       const os = l.originalScale ?? 1
@@ -43,7 +45,6 @@ function main() {
   const entries = computeDiffs()
   const path = join(reportDir, `validateResetSelection-${timestamp}.json`)
   writeFileSync(path, JSON.stringify({ timestamp, entries }, null, 2))
-  // eslint-disable-next-line no-console
   console.log(`written: ${path}`)
 }
 

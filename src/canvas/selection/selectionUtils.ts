@@ -60,9 +60,10 @@ export function applyGroupTransform(
     const newRot = l.rotation + deltaRot
     if (l.type === 'raster') {
       const r = l as RasterLayer
-      const { width, height } = { width: r.width, height: r.height }
-      const nextW = Math.max(10, Math.round(width * clampScale(scale)))
-      const nextH = Math.max(10, Math.round(height * clampScale(scale)))
+      const baseW = r.originalWidth ?? r.width
+      const baseH = r.originalHeight ?? r.height
+      const nextW = Math.max(1, Math.round(baseW * clampScale(scale)))
+      const nextH = Math.max(1, Math.round(baseH * clampScale(scale)))
       const tl = topLeftFromCenter(newCenter, newRot, nextW, nextH, 1)
       out.push({ id: l.id, x: tl.x, y: tl.y, rotation: newRot, width: nextW, height: nextH })
     } else {

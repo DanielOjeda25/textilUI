@@ -107,9 +107,14 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     return { layers: arr }
   }),
   updateLayer: (id: string, partial: Partial<AnyLayer>) => set(({ layers }) => {
-    const filterKeys = ['originalX', 'originalY', 'originalRotation', 'originalWidth', 'originalHeight', 'originalScale']
+    const filterKeys = ['originalX','originalY','originalRotation','originalWidth','originalHeight','originalScale']
     const safe: Record<string, unknown> = { ...partial }
     for (const k of filterKeys) { if (k in safe) delete (safe as { [key: string]: unknown })[k] }
+    const numericKeys = ['x','y','rotation','scale','width','height'] as const
+    for (const nk of numericKeys) {
+      const v = safe[nk]
+      if (typeof v === 'number' && !Number.isFinite(v)) delete (safe as { [key: string]: unknown })[nk]
+    }
     const next = layers.map((l) => {
       if (l.id !== id) return l
       if (l.locked) return l

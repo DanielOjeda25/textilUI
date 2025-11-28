@@ -4,7 +4,7 @@ import { memo, useEffect, useRef, useState, useCallback } from 'react'
 import { useCanvasStore } from '../state/useCanvasStore'
 import type { RasterLayer, TextLayer, VectorLayer } from './layers/layer.types'
 import { cornersWorld } from './tools/handle.utils'
-import { selectByRect, applyGroupTransform, selectionCenterOBB } from './selection/selectionUtils'
+import { selectByRect, selectionCenterOBB } from './selection/selectionUtils'
 import { shallow } from 'zustand/shallow'
 
 export type KonvaCanvasProps = { width: number; height: number }
@@ -298,34 +298,28 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
                             }}
                             onTransformEnd={() => {
                                 const nodes = transformerRef.current?.nodes() || []
-                                let deltaRot = 0
-                                if (nodes.length) {
-                                    const nid = [...allNodesRef.current.entries()].find(([, node]) => node === nodes[0])?.[0]
-                                    if (nid) {
-                                        const startR = transformSessionRef.current.startRot.get(nid) ?? 0
-                                        deltaRot = nodes[0].rotation() - startR
-                                    }
-                                }
-                                let accS = 0
                                 for (const n of nodes) {
+                                    const id = [...allNodesRef.current.entries()].find(([, node]) => node === n)?.[0]
+                                    if (!id) continue
+                                    const l = layersAll.find((x) => x.id === id)
+                                    if (!l) continue
                                     const sX = Math.min(5, Math.max(0.1, n.scaleX()))
                                     const sY = Math.min(5, Math.max(0.1, n.scaleY()))
-                                    accS += Math.abs((sX + sY) / 2)
-                                }
-                                const scale = nodes.length ? accS / nodes.length : 1
-                                const ids = transformSessionRef.current.startIds
-                                const updates = applyGroupTransform(layersAll, ids, deltaRot, scale)
-                                for (const u of updates) {
-                                    if ('width' in u && 'height' in u) {
-                                        useCanvasStore.getState().updateLayer(u.id, { x: u.x, y: u.y, rotation: u.rotation, width: u.width as number, height: u.height as number, scale: 1 })
+                                    const rot = n.rotation()
+                                    const origin = n.getAbsolutePosition()
+                                    if (l.type === 'raster') {
+                                        const rl = l as RasterLayer
+                                        const baseW = rl.originalWidth ?? rl.width
+                                        const baseH = rl.originalHeight ?? rl.height
+                                        const nextW = Math.max(1, Math.round(baseW * sX))
+                                        const nextH = Math.max(1, Math.round(baseH * sY))
+                                        useCanvasStore.getState().updateLayer(id, { x: origin.x, y: origin.y, rotation: rot, width: nextW, height: nextH, scale: 1 })
                                     } else {
-                                        useCanvasStore.getState().updateLayer(u.id, { x: u.x, y: u.y, rotation: u.rotation, scale: u.scale as number })
+                                        const nextS = Math.min(5, Math.max(0.1, Math.abs((sX + sY) / 2) * l.scale))
+                                        useCanvasStore.getState().updateLayer(id, { x: origin.x, y: origin.y, rotation: rot, scale: nextS })
                                     }
-                                }
-                                for (const n of nodes) {
-                                    const p = n.getAbsolutePosition()
                                     n.scaleX(1); n.scaleY(1)
-                                    n.position({ x: p.x, y: p.y })
+                                    n.position({ x: origin.x, y: origin.y })
                                 }
                                 transformSessionRef.current.started = false
                                 scheduleDraw(transformerRef.current?.getLayer() ?? null)
