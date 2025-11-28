@@ -3,8 +3,6 @@ import type Konva from 'konva'
 import { memo, useEffect, useRef, useState, useCallback } from 'react'
 import { useCanvasStore } from '../state/useCanvasStore'
 import type { RasterLayer, TextLayer, VectorLayer } from './layers/layer.types'
-import { cornersWorld } from './tools/handle.utils'
-import { selectByRect, selectionCenterOBB } from './selection/selectionUtils'
 import { shallow } from 'zustand/shallow'
 
 export type KonvaCanvasProps = { width: number; height: number }
@@ -13,7 +11,7 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
     const viewport = useCanvasStore((s) => s.viewport, shallow)
     useCanvasStore((s) => s.selectedLayerId)
     const selectedIds = useCanvasStore((s) => s.selectedLayerIds, shallow)
-    const selectionMode = useCanvasStore((s) => s.selectionMode)
+    useCanvasStore((s) => s.layers)
     const layerIds = useCanvasStore((s) => s.layers.map((l) => l.id), shallow)
     const selectedLayer = useCanvasStore((s) => s.layers.find((l) => l.id === s.selectedLayerId) || null)
     const layersAll = useCanvasStore((s) => s.layers, shallow)
@@ -29,15 +27,7 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
     const selStartRef = useRef<{ x: number; y: number } | null>(null)
     const selStartWorldRef = useRef<{ x: number; y: number } | null>(null)
     const [selRect, setSelRect] = useState<{ active: boolean; x: number; y: number; w: number; h: number }>({ active: false, x: 0, y: 0, w: 0, h: 0 })
-    const transformSessionRef = useRef<{
-        started: boolean
-        startCenters: Map<string, { x: number; y: number }>
-        startRot: Map<string, number>
-        startScale: Map<string, number>
-        startRasterSize: Map<string, { w: number; h: number }>
-        startIds: string[]
-        center: { x: number; y: number }
-    }>({ started: false, startCenters: new Map(), startRot: new Map(), startScale: new Map(), startRasterSize: new Map(), startIds: [], center: { x: 0, y: 0 } })
+    const transformSessionRef = useRef<{ started: boolean }>({ started: false })
 
     const scheduleDraw = useCallback((layer?: Konva.Layer | null) => {
         const l = layer ?? transformerRef.current?.getLayer() ?? stageRef.current?.getLayers()[0]
@@ -212,7 +202,22 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
                     const minY = Math.min(worldA.y, worldB.y)
                     const maxY = Math.max(worldA.y, worldB.y)
 
-                    const selected = selectByRect(layersAll, { minX, minY, maxX, maxY }, selectionMode)
+                    const stage = stageRef.current
+                    const selected: string[] = []
+                    if (stage) {
+                        for (const id of layerIds) {
+                            const n = allNodesRef.current.get(id)
+                            const l = layersAll.find((x) => x.id === id)
+                            if (!n || !l || !l.visible || l.locked) continue
+                            const r = n.getClientRect({ relativeTo: stage })
+                            const lMinX = r.x
+                            const lMaxX = r.x + r.width
+                            const lMinY = r.y
+                            const lMaxY = r.y + r.height
+                            const inter = !(lMaxX < minX || maxX < lMinX || lMaxY < minY || maxY < lMinY)
+                            if (inter) selected.push(id)
+                        }
+                    }
                     if (selected.length) {
                         if (additive) {
                             const prev = useCanvasStore.getState().selectedLayerIds
@@ -268,27 +273,7 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
                             onTransform={() => {
                                 const node = transformerRef.current?.nodes()[0]
                                 if (!node) return
-                                if (!transformSessionRef.current.started) {
-                                    const ids = useCanvasStore.getState().selectedLayerIds
-                                    transformSessionRef.current.startIds = ids.slice()
-                                    transformSessionRef.current.center = selectionCenterOBB(layersAll, ids)
-                                    transformSessionRef.current.startCenters.clear()
-                                    transformSessionRef.current.startRot.clear()
-                                    transformSessionRef.current.startScale.clear()
-                                    transformSessionRef.current.startRasterSize.clear()
-                                    for (const id of ids) {
-                                        const l = layersAll.find((x) => x.id === id)
-                                        if (!l || !l.visible || l.locked) continue
-                                        const c = cornersWorld(l)
-                                        const cx = (c[0].x + c[2].x) / 2
-                                        const cy = (c[0].y + c[2].y) / 2
-                                        transformSessionRef.current.startCenters.set(id, { x: cx, y: cy })
-                                        transformSessionRef.current.startRot.set(id, l.rotation)
-                                        transformSessionRef.current.startScale.set(id, l.scale)
-                                        if (l.type === 'raster') transformSessionRef.current.startRasterSize.set(id, { w: (l as RasterLayer).width, h: (l as RasterLayer).height })
-                                    }
-                                    transformSessionRef.current.started = true
-                                }
+                                if (!transformSessionRef.current.started) transformSessionRef.current.started = true
                                 const sx = Math.min(5, Math.max(0.1, node.scaleX()))
                                 const sy = Math.min(5, Math.max(0.1, node.scaleY()))
                                 node.scaleX(sx)
@@ -306,7 +291,7 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
                                     const sX = Math.min(5, Math.max(0.1, n.scaleX()))
                                     const sY = Math.min(5, Math.max(0.1, n.scaleY()))
                                     const rot = n.rotation()
-                                    const origin = n.getAbsolutePosition()
+                                    const origin = (n.getAbsoluteTransform().copy() as unknown as { point: (p: { x: number; y: number }) => { x: number; y: number } }).point({ x: 0, y: 0 })
                                     if (l.type === 'raster') {
                                         const rl = l as RasterLayer
                                         const baseW = rl.originalWidth ?? rl.width
@@ -318,6 +303,7 @@ export default function KonvaCanvas({ width, height }: KonvaCanvasProps) {
                                         const nextS = Math.min(5, Math.max(0.1, Math.abs((sX + sY) / 2) * l.scale))
                                         useCanvasStore.getState().updateLayer(id, { x: origin.x, y: origin.y, rotation: rot, scale: nextS })
                                     }
+                                    n.rotation(rot)
                                     n.scaleX(1); n.scaleY(1)
                                     n.position({ x: origin.x, y: origin.y })
                                 }

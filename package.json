@@ -8,8 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run",
-    "validate": "vite-node scripts/run-validate-reset.ts"
+    "test": "vitest run"
   },
   "dependencies": {
     "@imagemagick/magick-wasm": "^0.0.37",
